@@ -27,8 +27,9 @@ while True:
 		tweetStr = "Everything is ok! My pH is now %r" % pH
 		api.update_status(status=tweetStr)
 		print "Tweeted: " + tweetStr
-	elif((hi > pHPre > lo) and not(hi > data > lo)):
+	elif((hi > pHPre > lo) and not(hi > pH > lo)):
 		tweetStr = "Ack! My pH is at %r" % pH
+		api.update_status(status=tweetStr)
 		print "Tweeted: " + tweetStr
 	else:
 		print "pHPre = %r pH = %r" % (pHPre, pH)
