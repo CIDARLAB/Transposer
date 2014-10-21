@@ -1,14 +1,10 @@
 #!/usr/bin/env python
-import serial
-import sys
-import time
+import phScan
 from twython import Twython
 
 print "Welcome to TweeColi!"
-high = 8				#Set high pH threshold here
-low = 6					#Set low pH threshold here
-usbport='/dev/ttyAMA0'			#RPi serial port
-ser=serial.Serial(usbport,38400)	
+hi = 8				#Set high pH threshold here
+lo = 6					#Set low pH threshold here
 
 # Put your twitter api keys and tokens below
 # Note: The current api keys correspond to @TweeColi 
@@ -18,24 +14,22 @@ accessToken = '2798012371-BYjTww8SShM4lUoh2RNpoAB4TJ1aZLcCQRGZUBc'
 accessTokenSecret = 'neGup8dLJbdlezQb2FrEKNHsxYdQUJCZbDxJ10Iinch7x'
 # This sets up twython
 api = Twython(apiKey,apiSecret,accessToken,accessTokenSecret) 
-line=""
 
+pHPre = 7
 while True:
-	data = ser.read()
-  	if(data == "\r"):
-		try:
-			linefl = float(line)
-		except:
-			print "Failed parsing float: ", line
-			continue
-		if(linefl > high or linefl < low):
-			tweetStr = "Ack! My pH is at %r" % linefl
-			api.update_status(status=tweetStr)
-			print "Tweeted: " + tweetStr
-			time.sleep(180)
-		else:
-			print "Did not Tweet:" + line
-		line = ""
+	pH = phScan.readLine()
+	try:
+		pH = float(pH)
+	except:
+		print "Failed to parse float: ", pH
+		continue
+  	if(not(hi > pHPre > lo) and (hi > pH > lo)):
+		tweetStr = "Everything is ok! My pH is now %r" % pH
+		api.update_status(status=tweetStr)
+		print "Tweeted: " + tweetStr
+	elif((hi > pHPre > lo) and not(hi > data > lo)):
+		tweetStr = "Ack! My pH is at %r" % pH
+		print "Tweeted: " + tweetStr
 	else:
-		line = line + data
-		print line
+		print "pHPre = %r pH = %r" % (pHPre, pH)
+	pHPre = pH
