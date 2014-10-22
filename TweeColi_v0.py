@@ -22,7 +22,7 @@ pHPre = 7
 
 # Continuous pH readings
 while True:
-	pH = phScan.readLine()
+	pH = phScan.get_next_value()
 	# Test float conversion in case of textual system response instead of data
 	try:
 		pH = float(pH)
