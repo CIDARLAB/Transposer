@@ -22,8 +22,13 @@ pHPre = 7
 
 # Continuous pH readings
 while True:
+<<<<<<< HEAD
 	pH = phScan.get_next_value()
 	# Test float conversion in case of textual system response instead of data
+=======
+	pH = phScan.readLine()
+	# Test float conversion in case of system response instead of data
+>>>>>>> parent of 226f493... fixed typo in comment
 	try:
 		pH = float(pH)
 	except:
