@@ -24,7 +24,7 @@ def read_word():
 
 # Send a command to the pH sensor to trigger a read, then return the next word it transmits.
 def get_value():
-	cmd = b'\rR\r'
+	cmd = b'R\r'
 	ser.write(cmd)
 	return read_word()
 
