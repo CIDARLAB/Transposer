@@ -19,10 +19,12 @@ api = Twython(apiKey,apiSecret,accessToken,accessTokenSecret)
 
 # Initialize pHPre variable, which stores the previous pH reading
 pHPre = 7
+# Clear the embedded shift register by getting an initial first value
+phScan.get_value()
 
 # Continuous pH readings
 while True:
-	pH = phScan.readLine()
+	pH = phScan.get_value()
 	# Test float conversion in case of textual system response instead of data
 	try:
 		pH = float(pH)

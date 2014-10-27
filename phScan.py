@@ -20,3 +20,19 @@ def readLine():
         else:
             line = line + data
     return line
+
+# Send a command to the pH sensor to trigger a read, then return the next word it transmits.
+def get_value():
+	cmd = b'R\r'
+	ser.write(cmd)
+	return read_word()
+
+# Get the next value reported by the pH sensor when in continous sampling mode.
+def get_next_value():
+	throwaway = read_word() # Throw away the first value read, since it might be garbled.
+	value = read_word() 
+
+
+
+
+>>>>>>> fix_serial_reads
