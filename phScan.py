@@ -10,7 +10,7 @@ ser=serial.Serial(usbport,38400)
 #Turn on the LEDs
 #ser.write(b'\rL,1\r')
 
-def readLine():
+def read_word():
     line=""
     reading = True
     while reading:
@@ -35,4 +35,3 @@ def get_next_value():
 
 
 
->>>>>>> fix_serial_reads
