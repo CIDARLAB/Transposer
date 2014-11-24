@@ -21,6 +21,10 @@ GPIO.setmode(GPIO.BCM)
 GPIO.setup(25, GPIO.OUT)
 GPIO.setup(24, GPIO.OUT)
 
+# Initialize variables
+aTc_state = 0
+Ara_state = 0
+
 try:
 	class MyStreamer(TwythonStreamer):
 		def on_success(self, data):
