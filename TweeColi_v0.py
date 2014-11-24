@@ -38,6 +38,7 @@ phScan.get_value()
 # Continuous pH readings
 while True:
 	pH = phScan.get_value()
+	stamp = datetime.datetime.now()
 	# Test float conversion in case of textual system response instead of data
 	try:
 		pH = float(pH)
@@ -47,12 +48,12 @@ while True:
 	# Test for movement from out of steady-state into steady state
   	if(not(hi > pHPre > lo) and (hi > pH > lo)):
 		#tweetStr = "Everything is ok! My pH is now %r" % pH
-		tweetStr = "aTc True" 
+		tweetStr = "%s: aTc True" % stamp
 		api.update_status(status=tweetStr)
 		print "Tweeted: " + tweetStr
 	# Test for movement from steady-state to outside of threshold
 	elif((hi > pHPre > lo) and not(hi > pH > lo)):
-		tweetStr = "aTc False" 
+		tweetStr = "%s: aTc False" % stamp
 		api.update_status(status=tweetStr)
 		print "Tweeted: " + tweetStr
 	# Print debugging message
