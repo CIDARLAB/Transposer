@@ -49,12 +49,12 @@ while True:
 	# Test for movement from out of steady-state into steady state
   	if(not(hi > pHPre > lo) and (hi > pH > lo)):
 		#tweetStr = "Everything is ok! My pH is now %r" % pH
-		tweetStr = "%s: aTc True" % stamp
+		tweetStr = "aTc True at %s" % stamp
 		api.update_status(status=tweetStr)
 		print "Tweeted: " + tweetStr
 	# Test for movement from steady-state to outside of threshold
 	elif((hi > pHPre > lo) and not(hi > pH > lo)):
-		tweetStr = "%s: aTc False" % stamp
+		tweetStr = "aTc False at %s" % stamp
 		api.update_status(status=tweetStr)
 		print "Tweeted: " + tweetStr
 	# Print debugging message
