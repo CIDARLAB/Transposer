@@ -18,7 +18,7 @@ accessTokenSecret = 'neGup8dLJbdlezQb2FrEKNHsxYdQUJCZbDxJ10Iinch7x'
 
 
 GPIO.setmode(GPIO.BCM)
-GPIO.setup(25, GPIO.IN)
+GPIO.setup(25, GPIO.OUT)
 GPIO.setup(24, GPIO.OUT)
 
 try:
@@ -34,17 +34,30 @@ try:
 					else:
 						aTc_state = 0
 					print aTc_state
-					print message
 				else:
-					print "Data error"
+					print "aTc data error"
+				if message['chemical'] == "Ara":
+					if message['state'] == "True":
+						Ara_state = 1
+					else:
+						Ara_state = 0
+					print message
+					print Ara_state
+				else:
+					print "Ara data error"
 				GPIO.output(24, aTc_state)
-				sleep(0.1)
-	
+				GPIO.output(25, Ara_state)
+					
 		def on_error(self, status_code, data):
 			print status_code
 	
 	stream = MyStreamer(apiKey, apiSecret,
 		    	accessToken, accessTokenSecret)
+	# User id below is @ryanjaysilva
 	stream.statuses.filter(follow=606389094)
+	# User id below is @TweeColi
+	#stream.statuses.filter(follow=2798012371)
+	# User id below is @bubacteria
+	#stream.statuses.filter(follow=2860939569)
 except KeyboardInterrupt:
 	GPIO.cleanup()

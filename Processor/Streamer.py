@@ -1,4 +1,10 @@
 from twython import TwythonStreamer
+# Keys for @ryanjaysilva
+#apiKey = 'fu4svJdREnATr3tNsLEhOvv5b'
+#apiSecret = 'uKOhBYw5W3Rlk1RUtPtjo8DERQko8uiQi9l9VddWAU5pAzUZ6e'
+#accessToken = '606389094-6HaxmuJZ6cqr4WzuYrBd5uPPWzEqnHar7X184jcv'
+#accessTokennSecret = 'GkNQsYZI2L7Zr4prqlgFbgljDHKH6BtpPrOUwuIh9XPY7'
+
 
 # Keys for @BUBacteria
 #apiKey = 'hbkblS9wvLUroL7tRI6MIO3Hj'
@@ -22,4 +28,8 @@ class MyStreamer(TwythonStreamer):
 
 stream = MyStreamer(apiKey, apiSecret,
 		    accessToken, accessTokenSecret)
+# User id below is @ryanjaysilva
 stream.statuses.filter(follow=606389094)
+# User id below is @TweeColi
+#stream.statuses.filter(follow=2798012371)
+#stream.statuses.filter(follow=2860939569)
