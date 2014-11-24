@@ -38,6 +38,7 @@ try:
 					else:
 						aTc_state = 0
 					print aTc_state
+					GPIO.output(24, aTc_state)
 				else:
 					print "aTc data error"
 				if message['chemical'] == "Ara":
@@ -47,10 +48,9 @@ try:
 						Ara_state = 0
 					print message
 					print Ara_state
+					GPIO.output(25, Ara_state)
 				else:
 					print "Ara data error"
-				GPIO.output(24, aTc_state)
-				GPIO.output(25, Ara_state)
 					
 		def on_error(self, status_code, data):
 			print status_code
