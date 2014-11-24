@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import phScan
+import datetime
 from twython import Twython
 
 print "Welcome to TweeColi!"
