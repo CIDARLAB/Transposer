@@ -58,6 +58,9 @@ echo ':: Install packages'
 echo '   vim'
 sudo apt-get --yes install vim >> $log
 sudo cp /home/$defaultUser/Bioelectronics/.vimrc /home/$defaultUser/
+echo '   minicom'
+sudo apt-get --yes install minicom >> $log
+sudo cp /home/$defaultUser/Bioelectronics/.bashrc /home/$defaultUser/
 echo '   pip'
 sudo apt-get --yes install python-pip >> $log
 echo '   twython'
