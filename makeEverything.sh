@@ -57,7 +57,7 @@ echo '   '$(timer $startTime)
 echo ':: Install packages'
 echo '   vim'
 sudo apt-get --yes install vim >> $log
-sudo cp ~/Bioelectronics/.vimrc ~
+sudo cp /home/$defaultUser/Bioelectronics/.vimrc /home/$defaultUser/
 echo '   pip'
 sudo apt-get --yes install python-pip >> $log
 echo '   twython'
