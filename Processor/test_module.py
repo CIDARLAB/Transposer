@@ -15,6 +15,8 @@ if message['chemical'] == "aTc":
 		aTc_state = 0
 	print aTc_state
 	print message
+	print "here is the username"
+	print username
 else:
 	print "Data error"
 
