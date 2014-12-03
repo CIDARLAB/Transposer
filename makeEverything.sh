@@ -50,6 +50,7 @@ startTime=$(timer)
 echo ':: Update packages'
 sudo apt-get --yes update >> $log
 sudo apt-get --yes dist-upgrade >> $log
+echo '   '$(timer $startTime)
 
 #########################################################
 
@@ -61,12 +62,14 @@ echo '   pip'
 sudo apt-get --yes install python-pip >> $log
 echo '   twython'
 sudo pip install twython >> $log
+echo '   '$(timer $startTime)
 
 #########################################################
 
 echo ':: configure git'
 git config --global user.email $gitUserEmail
 git config --global user.name $gitUsername
+echo '   '$(timer $startTime)
 
 #########################################################
 
@@ -75,5 +78,7 @@ echo '   rpi-serial-console install'
 sudo wget https://raw.githubusercontent.com/lurch/rpi-serial-console/master/rpi-serial-console -O /usr/bin/rpi-serial-console && sudo chmod +x /usr/bin/rpi-serial-console >> $log
 echo '   disable serial console'
 sudo rpi-serial-console disable >> $log 
+echo '   '$(timer $startTime)
 echo 'Your ip address is '$ipAddress''
 echo 'For the serial console to be disabled, you must restart the pi'
+echo ':: Installed OKAY. Enjoy.'
