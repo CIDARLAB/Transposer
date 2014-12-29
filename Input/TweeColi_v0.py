@@ -25,7 +25,7 @@ while not is_valid:
 			print("Invalid username. Try again")
 		else:
 			# Initialize pHPre variable, which stores the previous pH reading
-			phPre = lo+((hi-lo)/2)
+			pHPre = lo+((hi-lo)/2)
 			# Exit the loop
 			is_valid=1
 
