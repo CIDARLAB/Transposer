@@ -24,8 +24,26 @@ GPIO.setup(toFPGA0, GPIO.OUT)
 GPIO.setup(toFPGA1, GPIO.OUT)
 
 # Initialize variables
-aTc_state = 0
-Ara_state = 0
+chem0 = 0
+chem1 = 0
+
+print "Current number of chemical inputs is 2"
+print "Listening to @ryanjaysilva and @TweeColi"
+is_valid=0
+while not is_valid:
+	try:
+		# User-defined variables
+		chem0Name = raw_input("What chemical is the first input node sensing? Limit answer to 5-characters?: ") 
+		chem1Name = raw_input("What chemical is the second input node sensing? Limit answer to 5-characters?: ") 
+        except KeyboardInterrupt:
+	        GPIO.cleanup()
+	else:
+		if len(chem0Name) > 5 or len(chem1Name) > 5:
+			print("Chemical name is too long. Try again")
+		else:
+			# Exit the loop
+			is_valid=1
+
 
 try:
 	class MyStreamer(TwythonStreamer):
@@ -34,25 +52,25 @@ try:
 				# Assumed tweet format: chemical state (ex. aTc True)
 				message = Parse_Tweet.get_message(data)
 				username = Parse_Tweet.get_username(data)
-				if message['chemical'] == "aTc":
+				if message['chemical'] == chem0Name:
 					if message['state'] == "True":
-						aTc_state = 1
+						chem0 = 1
 					else:
-						aTc_state = 0
-					print aTc_state
-					GPIO.output(toFPGA1, aTc_state)
+						chem0 = 0
+					print chem0
+					GPIO.output(toFPGA1, chem0)
 				else:
-					print "no aTc update"
+					print("no %s update") % chem0Name
 				if message['chemical'] == "Ara":
 					if message['state'] == "True":
-						Ara_state = 1
+						chem1 = 1
 					else:
-						Ara_state = 0
+						chem1 = 0
 					print message
-					print Ara_state
-					GPIO.output(toFPGA0, Ara_state)
+					print chem1
+					GPIO.output(toFPGA0, chem1)
 				else:
-					print "No Ara update"
+					print("No %s update") % chem1Name
 					
 		def on_error(self, status_code, data):
 			print status_code
