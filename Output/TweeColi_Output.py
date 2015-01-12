@@ -8,7 +8,7 @@ from twython import TwythonStreamer
 apiKey = 'hbkblS9wvLUroL7tRI6MIO3Hj'
 apiSecret = 'EwVdnrn1DJzuxuyRDbzgoy1eh6it7x3PMesUoqIaDGstob3FPI'
 accessToken = '2860939569-oVLMyzz7TeQ3A5ji5WNPROIYQlZZTQ42dThvq7I'
-accessTokennSecret = 'Op5kNa6MCOTNtSHsoLoXZ4lT5He5JwMvBQOrdJpEqH4je'
+accessTokenSecret = 'Op5kNa6MCOTNtSHsoLoXZ4lT5He5JwMvBQOrdJpEqH4je'
 
 # Keys for @TweeColi
 #apiKey = 'RJSlPyCo084MJKX63tdygPNqZ'
@@ -78,7 +78,7 @@ try:
 	stream = MyStreamer(apiKey, apiSecret,
 		    	accessToken, accessTokenSecret)
 	# User id below is @ryanjaysilva
-	stream.statuses.filter(follow=606389094,2798012371)
+	stream.statuses.filter(follow='606389094,2798012371')
 	# User id below is @TweeColi
 	#stream.statuses.filter(follow=2798012371)
 	# User id below is @bubacteria
