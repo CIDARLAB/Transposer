@@ -1,7 +1,8 @@
 import ast
 import Parse_Tweet
+from pump_control import Pump
 from time import sleep
-import RPi.GPIO as GPIO
+import RPi.GPIO as gpio
 from twython import TwythonStreamer
 
 # Keys for @BUBacteria
@@ -16,27 +17,31 @@ accessTokenSecret = 'Op5kNa6MCOTNtSHsoLoXZ4lT5He5JwMvBQOrdJpEqH4je'
 #accessToken = '2798012371-BYjTww8SShM4lUoh2RNpoAB4TJ1aZLcCQRGZUBc'
 #accessTokenSecret = 'neGup8dLJbdlezQb2FrEKNHsxYdQUJCZbDxJ10Iinch7x'
 
-toFPGA0 = 25
-toFPGA1 = 24
+DIR = 11
+STEP = 13
 
-GPIO.setmode(GPIO.BCM)
-GPIO.setup(toFPGA0, GPIO.OUT)
-GPIO.setup(toFPGA1, GPIO.OUT)
+gpio.setmode(gpio.BOARD)
+gpio.setup(STEP, gpio.OUT, initial = gpio.HIGH)
+gpio.setup(DIR, gpio.OUT, intital = gpio.HIGH)
 
-# Initialize variables
-chem0 = 0
-chem1 = 0
+pitch = 0.8
+stepAngle = 1.8
+microsteps = 1
+syringeID = 14.8
+p = Pump(pitch, stepAngle, microsteps, syringeID)
 
 print "Current number of chemical inputs is 2"
 print "Listening to @ryanjaysilva and @TweeColi"
+
 is_valid=0
+
 while not is_valid:
 	try:
 		# User-defined variables
 		chem0Name = raw_input("What chemical is the first input node sensing? Limit answer to 5-characters?: ") 
 		chem1Name = raw_input("What chemical is the second input node sensing? Limit answer to 5-characters?: ") 
         except KeyboardInterrupt:
-	        GPIO.cleanup()
+	        gpio.cleanup()
 	else:
 		if len(chem0Name) > 5 or len(chem1Name) > 5:
 			print("Chemical name is too long. Try again")
@@ -47,6 +52,9 @@ while not is_valid:
 
 try:
 	class MyStreamer(TwythonStreamer):
+		# Initialize variables
+		chem0 = 0
+		chem1 = 0
 		def on_success(self, data):
 			if 'text' in data:
 				# Assumed tweet format: chemical state (ex. aTc True)
@@ -54,23 +62,27 @@ try:
 				username = Parse_Tweet.get_username(data)
 				if message['chemical'] == chem0Name:
 					if message['state'] == "True":
-						chem0 = 1
+						self.chem0 = 1
 					else:
-						chem0 = 0
-					print chem0
-					GPIO.output(toFPGA1, chem0)
+						self.chem0 = 0
+					print message
+					print self.chem0
 				else:
 					print("no %s update") % chem0Name
-				if message['chemical'] == "Ara":
+				if message['chemical'] == chem1Name:
 					if message['state'] == "True":
-						chem1 = 1
+						self.chem1 = 1
 					else:
-						chem1 = 0
+						self.chem1 = 0
 					print message
-					print chem1
-					GPIO.output(toFPGA0, chem1)
+					print self.chem1
 				else:
 					print("No %s update") % chem1Name
+				if (self.chem0 ^ self.chem1):
+					p.dispense_slow(1, DIR, STEP)
+					print "Dispensing"
+				else:
+					print (self.chem0 ^ self.chem1)
 					
 		def on_error(self, status_code, data):
 			print status_code
@@ -84,4 +96,4 @@ try:
 	# User id below is @bubacteria
 	#stream.statuses.filter(follow=2860939569)
 except KeyboardInterrupt:
-	GPIO.cleanup()
+	gpio.cleanup()
