@@ -17,7 +17,8 @@ int percentMotorSpeed;
 int stepsPerSecFlowRate;
 int stepsTotalFlow;
 
-String gCodeString;
+String g0CodeString;
+String g1CodeString;
 
 Serial myPort; 
 
@@ -51,7 +52,7 @@ void setup()
      .setFont(font)
      .setFocus(false)
      .setColor(color(50,50,50))
-     .setText("30")
+     .setText("1000")
      .setLabel("total fluid to move (uL)")
      .setAutoClear(false).keepFocus(false);
      ;
@@ -62,7 +63,7 @@ void setup()
      .setFont(font)
      .setFocus(false)
      .setColor(color(50,50,50))
-     .setText(".5")
+     .setText("1000")
      .setLabel("flow rate (ul/sec)")
      .setAutoClear(false).keepFocus(false);
      ;
@@ -73,7 +74,7 @@ void setup()
    .setFont(font)
    .setFocus(false)
    .setColor(color(50,50,50))
-   .setText("14.8")
+   .setText("14.74")
    .setLabel("Syringe inner diameter (mm)")
    .setAutoClear(false).keepFocus(false);
    ;
@@ -84,22 +85,33 @@ void setup()
    .setFont(font)
    .setFocus(false)
    .setColor(color(50,50,50))
-   .setText("2.116")
+   .setText("2.11667")
    .setLabel("Pitch of threaded rod (mm)")
    .setAutoClear(false).keepFocus(false);
    ;
    
-   cp5.addTextfield("stepsPerRevolutionField")
+   cp5.addTextfield("stepAngle")
    .setPosition(150,110)
    .setSize(100,25)
    .setFont(font)
    .setFocus(false)
    .setColor(color(50,50,50))
-   .setText("200")
-   .setLabel("Number steps per revolution\n8 micro steps")
+   .setText("1.8")
+   .setLabel("Motor Step Angle (deg)")
    .setAutoClear(false).keepFocus(false);
    ;
-   
+
+   cp5.addTextfield("microstepsField")
+   .setPosition(10,110)
+   .setSize(100,25)
+   .setFont(font)
+   .setFocus(false)
+   .setColor(color(50,50,50))
+   .setText("8")
+   .setLabel("Number of microsteps per step")
+   .setAutoClear(false).keepFocus(false);
+   ;
+  
    cp5.addTextfield("percentMotorSpeedField")
    .setPosition(290,10)
    .setSize(100,25)
@@ -118,8 +130,8 @@ void setup()
   totalFlow=0;
   ulPerRevolution=0;
   stepsPerRevolution=0;
-  gCodeString = "%\n%";
-
+  g0CodeString = "%\n%";
+  g1CodeString = "%\n%";
 }
 
 void draw()
@@ -141,34 +153,29 @@ void debugStates()
   flowRate = float(cp5.get(Textfield.class,"flowRateField").getText().trim());
   syringeInnerDiameter = float(cp5.get(Textfield.class,"syringeInnerDiameterField").getText().trim());
   pitch = float(cp5.get(Textfield.class,"pitchField").getText().trim());
-  stepsPerRevolution = int(cp5.get(Textfield.class,"stepsPerRevolutionField").getText().trim())*8;
+  stepsPerRevolution = int(360 / float(cp5.get(Textfield.class,"stepAngle").getText().trim()))*int(cp5.get(Textfield.class,"microstepsField").getText().trim());
   percentMotorSpeed = int(cp5.get(Textfield.class,"percentMotorSpeedField").getText().trim());
   
   ulPerRevolution = sq(syringeInnerDiameter/2) * PI * pitch;
-  ulPerStep = stepsPerRevolution/ulPerRevolution;
+  ulPerStep = ulPerRevolution/stepsPerRevolution;
   ulPerSecMotorSpeed = int(map(percentMotorSpeed,0,100, 0, 1500))*1/(stepsPerRevolution/ulPerRevolution); 
   stepsPerSecFlowRate = int(flowRate/ulPerStep);
-  stepsTotalFlow = int(totalFlow*ulPerStep);
+  stepsTotalFlow = int(totalFlow/ulPerStep);
   
   String dir = "PUSH";
-  String dirGcode = "+";
-  if(!direction) {
+  if(!direction)
     dir = "PULL";
-    dirGcode = "-";
-  }
   
-  text("Motor + syringe settings : "+ ulPerRevolution +"uL/revolution *** 1 step = " + ulPerStep + "uL *** 1 uL = "+1/(stepsPerRevolution/ulPerRevolution) +"steps", 0, 0);
+  text("Motor + syringe settings : "+ ulPerRevolution +"uL/revolution *** 1 step = " + ulPerStep + "uL *** 1 uL = "+1/(ulPerStep) +"steps", 0, 0);
   text(int(map(percentMotorSpeed,0,100, 0,1500)) + " steps per second based on motor speed percentage", 0, 20);
   text(ulPerSecMotorSpeed + " uL per second based on motor speed percentage", 0, 40);
   text(stepsTotalFlow + " steps at " + stepsPerSecFlowRate + " steps per second based on input Flow Rate", 0, 60);
   text("Program settings : "+totalFlow +"uL @ " + flowRate +"uL/s, direction : " + dir, 0, 80);
   
   
-  
-  gCodeString = "G01"+" S"+str(stepsPerSecFlowRate)+" X"+ dirGcode + str(stepsTotalFlow)+";";
-  //gCodeString = "G01"+" S"+str(20)+" X"+str(03)+";";
-  //text("GCODE PREVIEW :\n" + gCodeString, 0, 80);
-  text("GCODE PREVIEW :\n" + gCodeString, 0, 100);
+  g0CodeString = "G0" + " X" + str(stepsTotalFlow) + ";";
+  g1CodeString = "G1"+" S"+str(stepsPerSecFlowRate)+" X"+str(stepsTotalFlow)+";";
+  text("GCODE PREVIEW :\n" + "Press Right: " + g0CodeString + "\n" + "Press Left: " + g1CodeString, 0, 100);
   popMatrix();
 }
 void controlEvent(ControlEvent theEvent) {
@@ -188,6 +195,7 @@ void keyPressed() {
       // send Gcode position up 1
       println("manualMode : send gcode position up 1");
       myPort.write("G01 X+"+stepsPerRevolution+";");
+      //update position here
     } 
     else if (keyCode == DOWN) 
     {
@@ -195,16 +203,21 @@ void keyPressed() {
       println("manualMode : send gcode position down 1");
       println("G01 X-"+stepsPerRevolution+";");
       myPort.write("G01 X-"+stepsPerRevolution+";");
+      //update position here
     } 
     else if (keyCode == LEFT) 
     {
       println("hippoMode");
-      println(gCodeString);
-      myPort.write(gCodeString);
+      println(g1CodeString);
+      myPort.write(g1CodeString);
+      //update position here
     } 
     else if (keyCode == RIGHT) 
     {
-      
+      println("chickDuckMode");
+      println(g0CodeString);
+      myPort.write(g0CodeString);
+      //update position here
     }  
   }
   else
