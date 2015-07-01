@@ -1,7 +1,6 @@
 #include <AccelStepper.h>
 
-//
-int maxMotorSpeed = 1500;                     //speed motor will accellerate to (steps/sec)
+int maxMotorSpeed = 1500;                 //speed motor will accellerate to (steps/sec)
 int motorAccel = 2000;                    //steps/second/secoand to accelerate
 int motorDirPin = 2;                      //digital pin 2
 int motorStepPin = 3;                     //digital pin 3
@@ -40,12 +39,14 @@ void checkSerial()
   while(Serial.available() > 0) {           // if something is available
     char c=Serial.read();                   // get it
     Serial.print(c);                        // repeat it back so I know you got the message
-    if(sofar<MAX_BUF) buffer[sofar++]=c;    // store it
-    if(buffer[sofar-1]==';') break;         // checks for command termination using ';'
+    if(sofar<MAX_BUF) 
+      buffer[sofar++]=c;		    // store it
+    if(buffer[sofar-1]==';') 
+      break;				    // checks for command termination using ';'
   }
 
   if(sofar>0 && buffer[sofar-1]==';') {
-                                            // we got a message and it ends with a semicolon
+    // we got a message and it ends with a semicolon
     buffer[sofar]=0;                        // set the end of the buffer to zero for string function compatibility
     Serial.print(F("\r\n"));                // echo a return character and new line for human-readability
     processCommand();                       // do something with the command
@@ -78,7 +79,6 @@ void processCommand()
 int parsenumber(char c)
 {
   String tempCharString = "";
-
   for(int i = 0; i<MAX_BUF; i++)
   {
     if(buffer[i] == c)
@@ -89,7 +89,6 @@ int parsenumber(char c)
         tempCharString += buffer[i];
       }
         return tempCharString.toInt();
-        
     }
   }
   return 0;
