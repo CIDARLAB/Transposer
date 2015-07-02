@@ -9,7 +9,7 @@ public class Pump {
     int uStepsPerStep = 8; // uSteps/step
     int motorMaxSpeed = 1500; // uSteps/s
     // Flow Profile
-    double flowAcc = 0; // uL/s/s
+    double flowAcc = 2000; // uL/s/s
     double flowSpeed = 300; // uL/s    
     //Port
     Serial port;
@@ -52,7 +52,7 @@ public class Pump {
         int uStepsMove = (int)(volume / ulPerUStep); // uL * uSteps/uL
         CodeString = "A P" + str(pumpID) + " D" + str(uStepsAcc) +";";
         port.write(CodeString);
-        CodeString = "S P" + str(pumpID) + " D" + str(uStepsSpeed) +";";
+        CodeString = "V P" + str(pumpID) + " D" + str(uStepsSpeed) +";";
         port.write(CodeString);        
         if (dir) CodeString = "F P" + str(pumpID) + " D" + str(uStepsMove) +";";
         else CodeString = "B P" + str(pumpID) + " D" + str(uStepsMove) +";";

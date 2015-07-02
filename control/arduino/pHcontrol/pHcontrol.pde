@@ -14,7 +14,7 @@ boolean PUSH = true;
 void setup() {
   size(800,300);
   
-  myPort = new Serial(this, Serial.list()[0], 9600); // Open the port you are using at the rate you want:
+  myPort = new Serial(this, Serial.list()[7], 9600); // Open the port you are using at the rate you want:
   
   PFont font = createFont("AndaleMono-48.vlw",12, true);
   textFont(font);
