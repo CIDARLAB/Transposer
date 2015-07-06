@@ -2,21 +2,21 @@ import processing.serial.*;
 
 public class Pump {
     // Hardware 
-    double syringeInnerD = 14.74; // mm
-    double syringeMaxCap = 10000; // uL
-    double pitch = 2.11667; // mm/rev
-    double stepAngle = 1.8; // deg/step
+    float syringeInnerD = 14.74; // mm
+    int syringeMaxCap = 10000; // uL
+    float pitch = 2.11667; // mm/rev
+    float stepAngle = 1.8; // deg/step
     int uStepsPerStep = 8; // uSteps/step
     int motorMaxSpeed = 1500; // uSteps/s
     // Flow Profile
-    double flowAcc = 2000; // uL/s/s
-    double flowSpeed = 300; // uL/s    
+    float flowAcc = 2000; // uL/s/s
+    float flowSpeed = 300; // uL/s    
     //Port
     Serial port;
     int pumpID;
     // Calculated Values - update when hardware parameters are updated
-    double ulPerUStep; // ul/ustep
-    double flowMaxSpeed; // ul/s
+    float ulPerUStep; // ul/ustep
+    float flowMaxSpeed; // ul/s
 
     public Pump(Serial port, int pumpID) {
         this.port = port;
@@ -30,22 +30,31 @@ public class Pump {
         flowMaxSpeed = motorMaxSpeed * ulPerUStep; // uSteps/s * uL/uSteps
     }
     
-    public void setHardware(double syringeInnerD, double syringeMaxCap, double pitch, double stepAngle, int uStepsPerStep, int motorMaxSpeed) { 
-        this.syringeInnerD = syringeInnerD;
-        this.syringeMaxCap = syringeMaxCap;
-        this.pitch = pitch;
-        this.stepAngle = stepAngle;
-        this.uStepsPerStep = uStepsPerStep;
-        this.motorMaxSpeed = motorMaxSpeed;
+    public float getSyringeID() { return syringeInnerD; }
+    public int getSyringeMaxCap() { return syringeMaxCap; }
+    public float getPitch() { return pitch; }
+    public float getStepAngle() {return stepAngle; }
+    public int getMicrostepsPerStep() {return uStepsPerStep; }
+    public int getMotorMaxSpeed() { return motorMaxSpeed; }
+    public float getFlowAcc() { return flowAcc; }
+    public float getFlowSpeed() { return flowSpeed; }
+    
+    public void setHardware(float syringeInnerD, int syringeMaxCap, float pitch, float stepAngle, int uStepsPerStep, int motorMaxSpeed) { 
+        this.syringeInnerD = syringeInnerD > 0 ? syringeInnerD : this.syringeInnerD; // Only update if input is a positive number
+        this.syringeMaxCap = syringeMaxCap > 0 ? syringeMaxCap : this.syringeMaxCap;
+        this.pitch = pitch > 0 ? pitch : this.pitch;
+        this.stepAngle = stepAngle > 0 ? stepAngle : this.stepAngle;
+        this.uStepsPerStep = uStepsPerStep > 0 ? uStepsPerStep : this.uStepsPerStep;
+        this.motorMaxSpeed = motorMaxSpeed > 0 ? motorMaxSpeed : this.motorMaxSpeed;
         updateSettings();
     }
     
-    public void setFlowProfile(double acc, double speed) {
-        this.flowAcc = acc;
-        this.flowSpeed = speed < flowMaxSpeed ? speed : flowMaxSpeed; // Can't set the speed to higher than the motorMaxSpeed
+    public void setFlowProfile(float acc, float speed) {
+        this.flowAcc = acc > 0 ? acc : this.flowAcc;
+        this.flowSpeed = (speed > 0 && speed < flowMaxSpeed) ? speed : flowMaxSpeed; // Can't set the speed to higher than the motorMaxSpeed
     }
     
-    public void dispense(double volume, boolean dir) {
+    public void dispense(float volume, boolean dir) {
         String CodeString;
         int uStepsAcc = (int)(flowAcc / ulPerUStep); // uL/s/s * uSteps/uL
         int uStepsSpeed = (int)(flowSpeed / ulPerUStep); // uL/s * uSteps/uL
@@ -57,5 +66,18 @@ public class Pump {
         if (dir) CodeString = "F P" + str(pumpID) + " D" + str(uStepsMove) +";";
         else CodeString = "B P" + str(pumpID) + " D" + str(uStepsMove) +";";
         port.write(CodeString);
-    }    
+    }
+    
+    public void printValues() {
+        println("Syringe Inner Diameter:", syringeInnerD, "mm");
+        println("Syringe Max Capacity:", syringeMaxCap, "uL");
+        println("Pitch:", pitch, "mm/rev");
+        println("Step Angle:", stepAngle, "deg/step");
+        println("Microsteps Per Step:", uStepsPerStep, "uSteps/step");
+        println("Motor Max Speed:", motorMaxSpeed, "uSteps/s");
+        println("Flow Acceleration:", flowAcc, "uL/s/s");
+        println("Flow Speed:", flowSpeed, "uL/s ");   
+        println("Microliters Per Microstep:", ulPerUStep, "ul/ustep");
+        println("Flow Max Speed:", flowMaxSpeed, "ul/s");
+    }     
 }

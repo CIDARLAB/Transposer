@@ -14,7 +14,7 @@ boolean PUSH = true;
 void setup() {
   size(800,300);
   
-  myPort = new Serial(this, Serial.list()[7], 9600); // Open the port you are using at the rate you want:
+  myPort = new Serial(this, Serial.list()[0], 9600); // Open the port you are using at the rate you want:
   
   PFont font = createFont("AndaleMono-48.vlw",12, true);
   textFont(font);
@@ -25,13 +25,26 @@ void setup() {
   pHmeasured = 7.0;
     
   cp5 = new ControlP5(this);
-    // change the original colors
-    cp5.setColorForeground(0xffaaaaaa);
-    cp5.setColorBackground(0xffffffff);
-    cp5.setColorLabel(0xff555555);
-    cp5.setColorValue(0xff00ff00);
-    cp5.setColorActive(0xff000000);
-  
+  cp5.setColorForeground(0xffaaaaaa)
+     .setColorBackground(0xffffffff)
+     .setColorValue(0xff00ff00)
+     ;
+     
+  cp5.getTab("default")
+     .setLabel(" Experiment ")
+     .setColorLabel(0xff000000)
+     .setColorActive(0xffaaaaaa)
+     .setWidth(width/2)
+     ;  
+     
+  cp5.addTab("settings")
+     .setLabel(" Pump Settings ")
+     .setColorLabel(0xff000000)
+     .setColorActive(0xffaaaaaa)
+     .setWidth(width/2)
+     .activateEvent(true)
+     ;
+ 
   cp5.addTextfield("pHmin")
      .setPosition(100,40)
      .setSize(50,25)
@@ -61,8 +74,10 @@ void setup() {
      .setLabel("Delay (sec)")
      ;    
   
-  draw_syringe("Syringe1", color(0,0,255), 100, 100);    // pH-up
-  draw_syringe("Syringe2", color(255,0,0), 100, 150);    // pH-down
+  drawSyringe("Syringe1", color(0,0,255), 100, 100);    // pH-up
+  drawSyringe("Syringe2", color(255,0,0), 100, 150);    // pH-down
+  drawSettings("Syringe1", "settings", 100, 50);
+  drawSettings("Syringe2", "settings", 100, 160);
  
   cp5.addButton("run")
      .setPosition(720,250)
@@ -70,21 +85,20 @@ void setup() {
      .setLabel(" START")
      .setColorBackground(0xff00ff00 + 0x88000000)
      .setColorForeground(0xff00ff00)
-     .setOff();
+     .setOff()
      ;
 }
 
-void draw()
-{
-  background(245);
-  guiUpdate();    
-  if (cp5.get(Button.class,"run").isOn()) {
-    if (frameCount % (60 * loopDelay) == 0) runlogic();
-    if (frameCount % 60 == 0 && frameCount % (60 * loopDelay) != 0) updatepH(); // 1 sec required between sensor readings
-  }
+void draw() {
+  background(0xffaaaaaa);
+  fill(245);
+  noStroke();
+  rect(0 , 20, width, height-40);
+  if (cp5.getTab("default").isActive()) guiDefault();
+  if (cp5.getTab("settings").isActive()) guiSettings();
 }
 
-void guiUpdate() {  
+void guiDefault() {  
   fill(50);
  
   pHmin = float(cp5.get(Textfield.class,"pHmin").getText().trim());   
@@ -107,17 +121,20 @@ void guiUpdate() {
     cp5.get(Slider.class,"Syringe2").lock();
     cp5.get(Textfield.class,"Syringe1Fill").lock();
     cp5.get(Textfield.class,"Syringe2Fill").lock();
+    cp5.getTab("settings").hide();
+    if (frameCount % 60 == 0) updatepH(); // 1 sec required between sensor readings
+    if (frameCount % (60 * loopDelay) == 0) runLogic();
   }
   else {
     cp5.get(Button.class,"run").setLabel(" START")
        .setColorBackground(0xff00ff00 + 0x88000000)
        .setColorForeground(0xff00ff00);
     sliderInteraction(); 
-  }
+    cp5.getTab("settings").show();
+  };
 }
 
-void runlogic() {    
-  updatepH();
+void runLogic() {
   if (pHmeasured < pHmin) {
     if (s1 >= v1) {
       p1.dispense(v1, PUSH);
@@ -151,7 +168,7 @@ void runlogic() {
 void updatepH() {
   String val = "";
   myPort.write("R;");
-  if ( myPort.available() > 0) {  // If data is available, 
+  if (myPort.available() > 0) {  // If data is available, 
     val = myPort.readStringUntil('\n');         // read it and store it in val 
     pHmeasured = float(val.trim()); 
   }  
@@ -179,9 +196,61 @@ void sliderInteraction() {
     cp5.get(Textfield.class,"Syringe2Fill").setText(str(s2));
   };
 }  
+ 
+void guiSettings() {
+  fill(#0000ff + 0x88000000);
+  rect(20, 40, width-40, 100, 10);
+  fill(#ff0000 + 0x88000000);
+  rect(20, 150, width-40, 100, 10);
+  fill(50);
+  text("pH Down", 25, 60);
+  text("pH Up", 25, 170);
+} 
+
+
+void controlEvent(ControlEvent theControlEvent) {
+  if (theControlEvent.isTab()) {
+    cp5.get(Button.class, "Syringe1Update").setLabel("SET VALUES");
+    pumpGetValues(p1, "Syringe1");
+    pumpGetValues(p2, "Syringe2");
+  }
+}
+
+void Syringe1Update() {
+  pumpSetValues(p1,"Syringe1");
+  cp5.get(Button.class, "Syringe1Update").setLabel("SAVED!");
+}
+
+void Syringe2Update() {
+  pumpSetValues(p2,"Syringe2");
+  cp5.get(Button.class, "Syringe2Update").setLabel("SAVED!");
+}
+
+void pumpGetValues(Pump p, String name) {  
+    cp5.get(Textfield.class, name + "ID").setText(str(p.getSyringeID()));  
+    cp5.get(Textfield.class, name + "MaxCap").setText(str(p.getSyringeMaxCap()/1000));  
+    cp5.get(Textfield.class, name + "Pitch").setText(str(p.getPitch()));  
+    cp5.get(Textfield.class, name + "StepAngle").setText(str(p.getStepAngle()));  
+    cp5.get(Textfield.class, name + "MicrostepsPerStep").setText(str(p.getMicrostepsPerStep()));  
+    cp5.get(Textfield.class, name + "MotorMaxSpeed").setText(str(p.getMotorMaxSpeed()));
+    cp5.get(Textfield.class, name + "FlowAcc").setText(str(p.getFlowAcc()));  
+    cp5.get(Textfield.class, name + "FlowSpeed").setText(str(p.getFlowSpeed()));
+}
+
+void pumpSetValues(Pump p, String name) {
+  p.setHardware( float(cp5.get(Textfield.class, name + "ID").getText().trim()),  
+                 int(cp5.get(Textfield.class, name + "MaxCap").getText().trim())*1000,  
+                 float(cp5.get(Textfield.class, name + "Pitch").getText().trim()),  
+                 float(cp5.get(Textfield.class, name + "StepAngle").getText().trim()),  
+                 int(cp5.get(Textfield.class, name + "MicrostepsPerStep").getText().trim()),  
+                 int(cp5.get(Textfield.class, name + "MotorMaxSpeed").getText().trim()) );
+  p.setFlowProfile( float(cp5.get(Textfield.class, name + "FlowAcc").getText().trim()),  
+                    float(cp5.get(Textfield.class, name + "FlowSpeed").getText().trim()) );
+  p.printValues();
+}
   
-void draw_syringe(String name, color c, int x, int y) {  
-  PFont font = createFont("AndaleMono-48.vlw",12, true);
+void drawSyringe(String name, color c, int x, int y) {  
+  PFont font = createFont("AndaleMono-48.vlw", 12, true);
 
   cp5.addTextfield(name + "Dispense")
      .setPosition(x, y)
@@ -191,7 +260,6 @@ void draw_syringe(String name, color c, int x, int y) {
      .setColorCursor(color(0,0,0))
      .setText("50")
      .setLabel("Dispense Volume (uL)")
-     .setAutoClear(false).keepFocus(false);
      ;   
      
   cp5.addTextfield(name + "Fill")
@@ -212,4 +280,90 @@ void draw_syringe(String name, color c, int x, int y) {
      .setColorForeground(c + 0x88000000)
      .setColorActive(c)
      ;
-}  
+} 
+
+void drawSettings(String name, String tabName, int x, int y) {  
+  PFont font = createFont("AndaleMono-48.vlw",12, true);  
+  cp5.addTextfield(name + "ID")
+     .setPosition(x, y)
+     .setSize(50, 25)
+     .setFont(font)
+     .setColor(color(50,50,50))
+     .setColorCursor(color(0,0,0))
+     .setLabel("Syringe Inner Diameter (mm)")
+     .setTab(tabName)  
+     ;  
+  cp5.addTextfield(name + "MaxCap")
+     .setPosition(x + 150, y)
+     .setSize(50, 25)
+     .setFont(font)
+     .setColor(color(50,50,50))
+     .setColorCursor(color(0,0,0))
+     .setLabel("Syringe Capacity (ml)")
+     .setTab(tabName)  
+     ;  
+  cp5.addTextfield(name + "FlowAcc")
+     .setPosition(x + 300, y)
+     .setSize(50, 25)
+     .setFont(font)
+     .setColor(color(50,50,50))
+     .setColorCursor(color(0,0,0))
+     .setLabel("Flow Acceleration (uL/s/s)")
+     .setTab(tabName)  
+     ;
+  cp5.addTextfield(name + "FlowSpeed")
+     .setPosition(x + 450, y)
+     .setSize(50, 25)
+     .setFont(font)
+     .setColor(color(50,50,50))
+     .setColorCursor(color(0,0,0))
+     .setLabel("Flow Velocity (uL/s)")
+     .setTab(tabName)  
+     ;  
+
+  cp5.addTextfield(name + "Pitch")
+     .setPosition(x, y + 50)
+     .setSize(75, 25)
+     .setFont(font)
+     .setColor(color(50,50,50))
+     .setColorCursor(color(0,0,0))
+     .setLabel("Pitch (mm/rev)")
+     .setTab(tabName)  
+     ;  
+  cp5.addTextfield(name + "MotorMaxSpeed")
+     .setPosition(x + 150, y + 50)
+     .setSize(50, 25)
+     .setFont(font)
+     .setColor(color(50,50,50))
+     .setColorCursor(color(0,0,0))
+     .setLabel("Maximum Motor Speed (uSteps/s)")
+     .setTab(tabName)  
+     ; 
+  cp5.addTextfield(name + "StepAngle")
+     .setPosition(x + 300, y + 50)
+     .setSize(50, 25)
+     .setFont(font)
+     .setColor(color(50,50,50))
+     .setColorCursor(color(0,0,0))
+     .setLabel("Step Angle (deg/step)")
+     .setTab(tabName)  
+     ;  
+  cp5.addTextfield(name + "MicrostepsPerStep")
+     .setPosition(x + 450, y + 50)
+     .setSize(25, 25)
+     .setFont(font)
+     .setColor(color(50,50,50))
+     .setColorCursor(color(0,0,0))
+     .setLabel("Microsteps per Step")
+     .setTab(tabName)  
+     ;
+
+  cp5.addButton(name + "Update")
+     .setPosition(x+580,y+25)
+     .setSize(60,20)
+     .setLabel("SET VALUES")
+     .setColorBackground(0xffdddddd)
+     .setTab(tabName)
+     ;
+}
+
