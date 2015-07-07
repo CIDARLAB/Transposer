@@ -1,3 +1,4 @@
+import org.gicentre.utils.stat.*;
 import processing.serial.*;
 import controlP5.*;
 
@@ -11,10 +12,15 @@ float loopDelay; // in seconds
 Pump p1, p2;
 boolean PUSH = true;
 
+int count = 0; //restarts bar graph when start button is pressed
+int num = 30; // number of bars in bar graph 
+float[] pHdata = new float[num];
+BarChart barChart;
+
 void setup() {
-  size(800,300);
+  size(800,500);
   
-  myPort = new Serial(this, Serial.list()[0], 9600); // Open the port you are using at the rate you want:
+  myPort = new Serial(this, Serial.list()[7], 9600); // Open the port you are using at the rate you want:
   
   PFont font = createFont("AndaleMono-48.vlw",12, true);
   textFont(font);
@@ -87,6 +93,10 @@ void setup() {
      .setColorForeground(0xff00ff00)
      .setOff()
      ;
+      
+  barChart = new BarChart(this); 
+  barChart.setValueAxisLabel("Measured pH \n");
+  barChart.showValueAxis(true);
 }
 
 void draw() {
@@ -115,8 +125,6 @@ void guiDefault() {
     cp5.get(Button.class,"run").setLabel("  STOP")
        .setColorBackground(0xffff0000 + 0x88000000)
        .setColorForeground(0xffff0000);
-    text("Measured pH: "+ pHmeasured, 20, 240);  
-    text("Experiment in Progress!", 575, 265);
     cp5.get(Slider.class,"Syringe1").lock();
     cp5.get(Slider.class,"Syringe2").lock();
     cp5.get(Textfield.class,"Syringe1Fill").lock();
@@ -124,11 +132,18 @@ void guiDefault() {
     cp5.getTab("settings").hide();
     if (frameCount % 60 == 0) updatepH(); // 1 sec required between sensor readings
     if (frameCount % (60 * loopDelay) == 0) runLogic();
+    text("Measured pH: "+ pHmeasured, 20, 240);  
+    text("Experiment in Progress!", 575, 265);    
+    if (count > 0) {  
+      barChart.draw(20, height-240, width-40 , 200);
+    }
   }
   else {
     cp5.get(Button.class,"run").setLabel(" START")
        .setColorBackground(0xff00ff00 + 0x88000000)
        .setColorForeground(0xff00ff00);
+    count = 0;
+    pHdata = new float[num];
     sliderInteraction(); 
     cp5.getTab("settings").show();
   };
@@ -146,6 +161,8 @@ void runLogic() {
       textSize(20);
       fill(#F57676);
       text("Insufficient PH up solution, experiment stopped", 150, 220);
+      textSize(12);
+      fill(50);
       noLoop();
     };
   }
@@ -160,6 +177,8 @@ void runLogic() {
       textSize(20);
       fill(#F57676);
       text("Insufficient PH down solution, experiment stopped", 150, 220);
+      textSize(12);
+      fill(50);
       noLoop();
     };
   }  
@@ -171,7 +190,19 @@ void updatepH() {
   if (myPort.available() > 0) {  // If data is available, 
     val = myPort.readStringUntil('\n');         // read it and store it in val 
     pHmeasured = float(val.trim()); 
-  }  
+  }
+  else pHmeasured = random(pHmin-1,pHmax+1);
+  count++;
+  if (count <= num) {
+    pHdata[count-1] = pHmeasured;
+  }
+  else {
+    for (int i=0; i < num - 1; i++) {
+      pHdata[i] = pHdata[i+1];
+    }
+    pHdata[num - 1] = pHmeasured;
+  };
+  barChart.setData(pHdata);
 }
 
 void sliderInteraction() {
