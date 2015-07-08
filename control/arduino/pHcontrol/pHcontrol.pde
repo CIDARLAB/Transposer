@@ -5,6 +5,9 @@ import controlP5.*;
 ControlP5 cp5;
 Serial myPort; 
 
+PrintWriter pHlog;
+boolean pHlogging = false;
+
 float pHmin, pHmax, pHmeasured;
 int s1, s2; // syringe fill values
 int v1, v2; // volume dispensed values
@@ -12,9 +15,10 @@ float loopDelay; // in seconds
 Pump p1, p2;
 boolean PUSH = true;
 
-int count = 0; //restarts bar graph when start button is pressed
+int count; //restarts bar graph when start button is pressed
 int num = 30; // number of bars in bar graph 
-float[] pHdata = new float[num];
+int displayTiming = 1;
+float[] pHdata;
 BarChart barChart;
 
 void setup() {
@@ -44,7 +48,7 @@ void setup() {
      ;  
      
   cp5.addTab("settings")
-     .setLabel(" Pump Settings ")
+     .setLabel(" Settings ")
      .setColorLabel(0xff000000)
      .setColorActive(0xffaaaaaa)
      .setWidth(width/2)
@@ -82,10 +86,10 @@ void setup() {
   
   drawSyringe("Syringe1", color(0,0,255), 100, 100);    // pH-up
   drawSyringe("Syringe2", color(255,0,0), 100, 150);    // pH-down
-  drawSettings("Syringe1", "settings", 100, 50);
-  drawSettings("Syringe2", "settings", 100, 160);
+  drawSettings("Syringe1", "settings", 100, 70);
+  drawSettings("Syringe2", "settings", 100, 210);
  
-  cp5.addButton("run")
+  cp5.addButton("pressMe")
      .setPosition(720,250)
      .setSize(40,20)
      .setLabel(" START")
@@ -93,7 +97,36 @@ void setup() {
      .setColorForeground(0xff00ff00)
      .setOff()
      ;
-      
+  
+  cp5.addTextfield("DisplayTiming")
+     .setPosition(250,350)
+     .setSize(40,25)
+     .setFont(font)
+     .setColor(color(50,50,50))
+     .setColorCursor(color(0,0,0))
+     .setText(str(displayTiming))
+     .setLabel("Time between updates (sec)")
+     .setTab("settings")
+     ;  
+  cp5.addTextfield("DisplayDensity")
+     .setPosition(400,350)
+     .setSize(40,25)
+     .setFont(font)
+     .setColor(color(50,50,50))
+     .setColorCursor(color(0,0,0))
+     .setText(str(num))
+     .setLabel("Number of data points shown")
+     .setTab("settings")
+     ;
+  cp5.addToggle("writeToLog")
+     .setPosition(250,400)
+     .setSize(40,25)
+     .setValue(false)
+     .setLabel("Off")
+     .setMode(ControlP5.SWITCH)
+     .setTab("settings")
+     ;
+     
   barChart = new BarChart(this); 
   barChart.setValueAxisLabel("Measured pH \n");
   barChart.showValueAxis(true);
@@ -109,8 +142,7 @@ void draw() {
 }
 
 void guiDefault() {  
-  fill(50);
- 
+  fill(50); 
   pHmin = float(cp5.get(Textfield.class,"pHmin").getText().trim());   
   pHmax = float(cp5.get(Textfield.class,"pHmax").getText().trim());   
   loopDelay = float(cp5.get(Textfield.class,"LoopDelay").getText().trim());
@@ -121,8 +153,23 @@ void guiDefault() {
   text("pH Up", 20, 120);
   text("pH Down", 20, 170); 
     
-  if (cp5.get(Button.class,"run").isOn()) {
-    cp5.get(Button.class,"run").setLabel("  STOP")
+  if (cp5.get(Button.class,"pressMe").isOn()) {
+    if (frameCount % 60 == 0) updatepH(); // 1 sec required between sensor readings
+    if (frameCount % (60 * loopDelay) == 0) runLogic();
+    text("Measured pH: "+ nfc(pHmeasured, 3), 20, 240);  
+    text("Experiment in Progress!", 575, 265);    
+    if (count >= displayTiming) {  
+      barChart.draw(20, height-240, width-40 , 200);
+    }
+  }
+  else {
+    sliderInteraction();
+  };
+}
+
+void pressMe() {
+  if (cp5.get(Button.class,"pressMe").isOn()) {
+    cp5.get(Button.class,"pressMe").setLabel("  STOP")
        .setColorBackground(0xffff0000 + 0x88000000)
        .setColorForeground(0xffff0000);
     cp5.get(Slider.class,"Syringe1").lock();
@@ -130,23 +177,24 @@ void guiDefault() {
     cp5.get(Textfield.class,"Syringe1Fill").lock();
     cp5.get(Textfield.class,"Syringe2Fill").lock();
     cp5.getTab("settings").hide();
-    if (frameCount % 60 == 0) updatepH(); // 1 sec required between sensor readings
-    if (frameCount % (60 * loopDelay) == 0) runLogic();
-    text("Measured pH: "+ pHmeasured, 20, 240);  
-    text("Experiment in Progress!", 575, 265);    
-    if (count > 0) {  
-      barChart.draw(20, height-240, width-40 , 200);
-    }
-  }
-  else {
-    cp5.get(Button.class,"run").setLabel(" START")
-       .setColorBackground(0xff00ff00 + 0x88000000)
-       .setColorForeground(0xff00ff00);
     count = 0;
     pHdata = new float[num];
-    sliderInteraction(); 
-    cp5.getTab("settings").show();
-  };
+    if (pHlogging) {pHlog = createWriter(nf(year(),4)+nf(month(),2)+nf(day(),2)+"pHlog"+nf(hour(),2)+nf(minute(),2)+nf(second(),2)+".txt");}     
+  }
+  else {
+    cp5.get(Button.class,"pressMe").setLabel(" START")
+       .setColorBackground(0xff00ff00 + 0x88000000)
+       .setColorForeground(0xff00ff00);
+    cp5.get(Slider.class,"Syringe1").unlock();
+    cp5.get(Slider.class,"Syringe2").unlock();
+    cp5.get(Textfield.class,"Syringe1Fill").unlock();
+    cp5.get(Textfield.class,"Syringe2Fill").unlock();
+    cp5.getTab("settings").show();  
+    if (pHlogging) {
+      pHlog.flush();
+      pHlog.close();
+    }
+  }
 }
 
 void runLogic() {
@@ -158,12 +206,7 @@ void runLogic() {
       cp5.get(Textfield.class,"Syringe1Fill").setText(str(s1));
     }
     else {
-      textSize(20);
-      fill(#F57676);
-      text("Insufficient PH up solution, experiment stopped", 150, 220);
-      textSize(12);
-      fill(50);
-      noLoop();
+      shutDown("Insufficient PH up solution, experiment stopped");
     };
   }
   if (pHmeasured > pHmax) {
@@ -174,14 +217,22 @@ void runLogic() {
       cp5.get(Textfield.class,"Syringe2Fill").setText(str(s2));
     }
     else {
-      textSize(20);
-      fill(#F57676);
-      text("Insufficient PH down solution, experiment stopped", 150, 220);
-      textSize(12);
-      fill(50);
-      noLoop();
+      shutDown("Insufficient PH down solution, experiment stopped");
     };
   }  
+}
+
+void shutDown(String message) {
+  textSize(20);
+  fill(#F57676);
+  text(message, 150, 220);
+  textSize(12);
+  fill(50); 
+  if (pHlogging) {
+    pHlog.flush();
+    pHlog.close();
+  }
+  noLoop();
 }
 
 void updatepH() {
@@ -193,23 +244,22 @@ void updatepH() {
   }
   else pHmeasured = random(pHmin-1,pHmax+1);
   count++;
-  if (count <= num) {
-    pHdata[count-1] = pHmeasured;
-  }
-  else {
-    for (int i=0; i < num - 1; i++) {
-      pHdata[i] = pHdata[i+1];
+  if (count % displayTiming == 0) {
+    if (count/displayTiming <= num) {
+      pHdata[count/displayTiming-1] = pHmeasured;
     }
-    pHdata[num - 1] = pHmeasured;
-  };
+    else {
+      for (int i=0; i < num - 1; i++) {
+        pHdata[i] = pHdata[i+1];
+      }
+      pHdata[num - 1] = pHmeasured;
+    };
+  }
+  if (pHlogging) pHlog.println(nf(hour(),2)+":"+nf(minute(),2)+":"+nf(second(),2)+" "+nfc(pHmeasured,3));
   barChart.setData(pHdata);
 }
 
 void sliderInteraction() {
-    cp5.get(Slider.class,"Syringe1").unlock();
-    cp5.get(Slider.class,"Syringe2").unlock();
-    cp5.get(Textfield.class,"Syringe1Fill").unlock();
-    cp5.get(Textfield.class,"Syringe2Fill").unlock();
   if (cp5.get(Textfield.class,"Syringe1Fill").isFocus()) {  
     s1 = int(cp5.get(Textfield.class,"Syringe1Fill").getText().trim());  
     cp5.get(Slider.class,"Syringe1").setValue(s1);
@@ -230,18 +280,36 @@ void sliderInteraction() {
  
 void guiSettings() {
   fill(#0000ff + 0x88000000);
-  rect(20, 40, width-40, 100, 10);
+  rect(20, 60, width-40, 105, 10);
   fill(#ff0000 + 0x88000000);
-  rect(20, 150, width-40, 100, 10);
+  rect(20, 200, width-40, 105, 10);
+  fill(#00ff00 + 0x88000000);
+  rect(20, 340, width-40, 105, 10);
   fill(50);
-  text("pH Down", 25, 60);
-  text("pH Up", 25, 170);
+  text("pH Down pump", 20, 54);
+  text("pH Up pump", 20, 194);
+  text("pH Data", 20, 334);
+  text("Runtime Trend Display", 100, 370);
+  text("Writing Data to Log file", 100, 420);
+  displayTiming = int(cp5.get(Textfield.class,"DisplayTiming").getText().trim());  
+  num = int(cp5.get(Textfield.class,"DisplayDensity").getText().trim());   
 } 
 
+void writeToLog(boolean flag) {
+  if (flag) {
+    cp5.get(Toggle.class,"writeToLog").setLabel("\t ON");
+    pHlogging = true;
+  }
+  else {
+    cp5.get(Toggle.class,"writeToLog").setLabel("OFF");
+    pHlogging = false;
+  }
+}
 
 void controlEvent(ControlEvent theControlEvent) {
   if (theControlEvent.isTab()) {
     cp5.get(Button.class, "Syringe1Update").setLabel("SET VALUES");
+    cp5.get(Button.class, "Syringe2Update").setLabel("SET VALUES");
     pumpGetValues(p1, "Syringe1");
     pumpGetValues(p2, "Syringe2");
   }
@@ -249,11 +317,13 @@ void controlEvent(ControlEvent theControlEvent) {
 
 void Syringe1Update() {
   pumpSetValues(p1,"Syringe1");
+  cp5.get(Slider.class,"Syringe1").setRange(0, p1.getSyringeMaxCap());
   cp5.get(Button.class, "Syringe1Update").setLabel("SAVED!");
 }
 
 void Syringe2Update() {
-  pumpSetValues(p2,"Syringe2");
+  pumpSetValues(p2,"Syringe2");  
+  cp5.get(Slider.class,"Syringe2").setRange(0, p2.getSyringeMaxCap());
   cp5.get(Button.class, "Syringe2Update").setLabel("SAVED!");
 }
 
