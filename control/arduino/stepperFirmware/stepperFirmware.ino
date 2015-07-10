@@ -114,12 +114,12 @@ void processCommand()
   case  'B': // pull in fluid "backwards"
     pumpNum = parsenumber('P');            //retrieve 1-indexed pump number      
     posTemp = parsenumber('D');            //retrieve number of steps to move
-    motorPos_temp[pumpNum-1] -= posTemp;               //move posTemp number of steps
+    motorPos_temp[pumpNum-1] += posTemp;               //move posTemp number of steps
     break;
   case  'F': // push fluid "Forwards"
     pumpNum = parsenumber('P');            //retrieve 1-indexed pump number      
     posTemp = parsenumber('D');            //retrieve number of steps to move
-    motorPos_temp[pumpNum-1] += posTemp;      //move posTemp number of steps
+    motorPos_temp[pumpNum-1] -= posTemp;      //move posTemp number of steps
     break;
   case  'A': // set acceleration
     pumpNum = parsenumber('P');            //retrieve 1-indexed pump number
