@@ -19,20 +19,20 @@ int count; //restarts bar graph when start button is pressed
 int num = 30; // number of bars in bar graph 
 int displayTiming = 1;
 float[] pHdata;
+boolean mockData = false;
 BarChart barChart;
+  
+PFont font = createFont("AndaleMono-48.vlw",12, true);
 
 void setup() {
   size(800,500);
-  
-  myPort = new Serial(this, Serial.list()[7], 9600); // Open the port you are using at the rate you want:
-  
-  PFont font = createFont("AndaleMono-48.vlw",12, true);
+  println(Serial.list());
+  myPort = new Serial(this, Serial.list()[0], 9600); // Open the port you are using at the rate you want:
   textFont(font);
   ControlFont cfont = new ControlFont(font,241);
   
   p1 = new Pump(myPort, 1); // pH up solution
   p2 = new Pump(myPort, 2); // pH down solution
-  pHmeasured = 7.0;
     
   cp5 = new ControlP5(this);
   cp5.setColorForeground(0xffaaaaaa)
@@ -61,7 +61,7 @@ void setup() {
      .setFont(font)
      .setColor(color(50,50,50))
      .setColorCursor(color(0,0,0))
-     .setText("6.534")
+     .setText("3.5")
      .setLabel("Min")
      ;  
   cp5.addTextfield("pHmax")
@@ -70,7 +70,7 @@ void setup() {
      .setFont(font)
      .setColor(color(50,50,50))
      .setColorCursor(color(0,0,0))
-     .setText("7.512")
+     .setText("5.5")
      .setLabel("Max")
      ;    
   
@@ -90,7 +90,7 @@ void setup() {
   drawSettings("Syringe2", "settings", 100, 210);
  
   cp5.addButton("pressMe")
-     .setPosition(720,250)
+     .setPosition(726,235)
      .setSize(40,20)
      .setLabel(" START")
      .setColorBackground(0xff00ff00 + 0x88000000)
@@ -128,8 +128,10 @@ void setup() {
      ;
      
   barChart = new BarChart(this); 
-  barChart.setValueAxisLabel("Measured pH \n");
+  barChart.setValueAxisLabel("Measured pH");
   barChart.showValueAxis(true);
+  barChart.setMinValue(0);
+  barChart.setMaxValue(10);
 }
 
 void draw() {
@@ -156,10 +158,14 @@ void guiDefault() {
   if (cp5.get(Button.class,"pressMe").isOn()) {
     if (frameCount % 60 == 0) updatepH(); // 1 sec required between sensor readings
     if (frameCount % (60 * loopDelay) == 0) runLogic();
-    text("Measured pH: "+ nfc(pHmeasured, 3), 20, 240);  
-    text("Experiment in Progress!", 575, 265);    
-    if (count >= displayTiming) {  
-      barChart.draw(20, height-240, width-40 , 200);
+    if (mockData) text("MOCK DATA pH: "+ nfc(pHmeasured, 3), 20, 250);
+    else text("Measured pH: "+ nfc(pHmeasured, 3), 20, 250);
+    text("Experiment in Progress!", 575, 250);    
+    if (count >= displayTiming) {
+      fill(#00ff00 + 0x88000000);
+      int h = height-245;
+      rect(57, h + 11 + floor(20*(10-pHmax)), width-90, floor(20*(pHmax-pHmin)));
+      barChart.draw(20, h, width-50, 214);      
     }
   }
   else {
@@ -179,7 +185,7 @@ void pressMe() {
     cp5.getTab("settings").hide();
     count = 0;
     pHdata = new float[num];
-    if (pHlogging) {pHlog = createWriter(nf(year(),4)+nf(month(),2)+nf(day(),2)+"pHlog"+nf(hour(),2)+nf(minute(),2)+nf(second(),2)+".txt");}     
+    if (pHlogging) pHlog = createWriter(nf(year(),4)+nf(month(),2)+nf(day(),2)+"pHlog"+nf(hour(),2)+nf(minute(),2)+nf(second(),2)+".txt");
   }
   else {
     cp5.get(Button.class,"pressMe").setLabel(" START")
@@ -205,9 +211,7 @@ void runLogic() {
       cp5.get(Slider.class,"Syringe1").setValue(s1);
       cp5.get(Textfield.class,"Syringe1Fill").setText(str(s1));
     }
-    else {
-      shutDown("Insufficient PH up solution, experiment stopped");
-    };
+    else shutDown("Insufficient PH up solution, experiment stopped");
   }
   if (pHmeasured > pHmax) {
     if (s2 >= v2) {
@@ -216,9 +220,7 @@ void runLogic() {
       cp5.get(Slider.class,"Syringe2").setValue(s2);
       cp5.get(Textfield.class,"Syringe2Fill").setText(str(s2));
     }
-    else {
-      shutDown("Insufficient PH down solution, experiment stopped");
-    };
+    else shutDown("Insufficient PH down solution, experiment stopped");
   }  
 }
 
@@ -241,13 +243,15 @@ void updatepH() {
   if (myPort.available() > 0) {  // If data is available, 
     val = myPort.readStringUntil('\n');         // read it and store it in val 
     pHmeasured = float(val.trim()); 
+    mockData = false;
   }
-  else pHmeasured = random(pHmin-1,pHmax+1);
+  else {
+    pHmeasured = random(pHmin-1,pHmax+1);
+    mockData = true;
+  }
   count++;
   if (count % displayTiming == 0) {
-    if (count/displayTiming <= num) {
-      pHdata[count/displayTiming-1] = pHmeasured;
-    }
+    if (count/displayTiming <= num) pHdata[count/displayTiming-1] = pHmeasured;
     else {
       for (int i=0; i < num - 1; i++) {
         pHdata[i] = pHdata[i+1];
@@ -297,7 +301,7 @@ void guiSettings() {
 
 void writeToLog(boolean flag) {
   if (flag) {
-    cp5.get(Toggle.class,"writeToLog").setLabel("\t ON");
+    cp5.get(Toggle.class,"writeToLog").setLabel("               ON");
     pHlogging = true;
   }
   else {
@@ -350,12 +354,10 @@ void pumpSetValues(Pump p, String name) {
   p.printValues();
 }
   
-void drawSyringe(String name, color c, int x, int y) {  
-  PFont font = createFont("AndaleMono-48.vlw", 12, true);
-
+void drawSyringe(String name, color c, int x, int y) {
   cp5.addTextfield(name + "Dispense")
      .setPosition(x, y)
-     .setSize(50, 25)
+     .setSize(50,25)
      .setFont(font)
      .setColor(color(50,50,50))
      .setColorCursor(color(0,0,0))
@@ -384,7 +386,6 @@ void drawSyringe(String name, color c, int x, int y) {
 } 
 
 void drawSettings(String name, String tabName, int x, int y) {  
-  PFont font = createFont("AndaleMono-48.vlw",12, true);  
   cp5.addTextfield(name + "ID")
      .setPosition(x, y)
      .setSize(50, 25)
@@ -467,4 +468,3 @@ void drawSettings(String name, String tabName, int x, int y) {
      .setTab(tabName)
      ;
 }
-
