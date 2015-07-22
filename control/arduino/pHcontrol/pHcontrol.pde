@@ -290,8 +290,8 @@ void guiSettings() {
   fill(#00ff00 + 0x88000000);
   rect(20, 340, width-40, 105, 10);
   fill(50);
-  text("pH Down pump", 20, 54);
-  text("pH Up pump", 20, 194);
+  text("pH Up pump", 20, 54);
+  text("pH Down pump", 20, 194);
   text("pH Data", 20, 334);
   text("Runtime Trend Display", 100, 370);
   text("Writing Data to Log file", 100, 420);
