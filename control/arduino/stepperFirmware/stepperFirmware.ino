@@ -6,8 +6,8 @@ int motor1DirPin = 2;                      //digital pin 2
 int motor1StepPin = 3;                     //digital pin 3
 int motor2DirPin = 4;
 int motor2StepPin = 5;
-int motorPos[2] = {0, 0};
-int motorPos_temp[2] = {0, 0};
+long motorPos[2] = {0, 0};
+long motorPos_temp[2] = {0, 0};
 boolean reading = true;
 String sensorstring = ""; 
 char readstring[ ] = "R\r";
@@ -20,7 +20,7 @@ char buffer[MAX_BUF];                     // Creates serial buffer
 char bufferSensor[MAX_BUF];
 
 // processCommand() Variables
-int posTemp = 0;
+long posTemp[2] = {0, 0};
 int speedTemp = 0;
 int pumpNum = 5;
 int accelTemp = 0;
@@ -55,6 +55,8 @@ void loop()
       }
     }
     checkSerial();
+    //Serial.println(stepper[0].distanceToGo());
+    //Serial.println(motorPos[0]);
     stepper[0].run();
     stepper[1].run();
 }
@@ -113,13 +115,13 @@ void processCommand()
     break;
   case  'B': // pull in fluid "backwards"
     pumpNum = parsenumber('P');            //retrieve 1-indexed pump number      
-    posTemp = parsenumber('D');            //retrieve number of steps to move
-    motorPos_temp[pumpNum-1] += posTemp;               //move posTemp number of steps
+    posTemp[pumpNum-1] = parsenumber('D');            //retrieve number of steps to move
+    motorPos_temp[pumpNum-1] += posTemp[pumpNum-1];               //move posTemp number of steps
     break;
   case  'F': // push fluid "Forwards"
     pumpNum = parsenumber('P');            //retrieve 1-indexed pump number      
-    posTemp = parsenumber('D');            //retrieve number of steps to move
-    motorPos_temp[pumpNum-1] -= posTemp;      //move posTemp number of steps
+    posTemp[pumpNum-1] = parsenumber('D');            //retrieve number of steps to move
+    motorPos_temp[pumpNum-1] -= posTemp[pumpNum-1];      //move posTemp number of steps
     break;
   case  'A': // set acceleration
     pumpNum = parsenumber('P');            //retrieve 1-indexed pump number

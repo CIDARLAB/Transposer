@@ -123,6 +123,18 @@ void setup()
    .setAutoClear(false).keepFocus(false);
    ;
 
+   cp5.addTextfield("fluidSyringe1")
+   .setPosition(290,10)
+   .setSize(100,25)
+   .setFont(font)
+   .setFocus(false)
+   .setColor(color(50,50,50))
+   .setText("100")
+   .setLabel("percent motor speed")
+   .setAutoClear(false).keepFocus(false);
+   ;
+
+
   color c = color(0,0,255);
   smooth();
   
