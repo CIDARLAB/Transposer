@@ -2,12 +2,14 @@
 
 int maxMotorSpeed = 1500;                 //speed motor will accellerate to (steps/sec)
 int motorAccel = 2000;                    //steps/second/secoand to accelerate
-int motor1DirPin = 2;                      //digital pin 2
-int motor1StepPin = 3;                     //digital pin 3
-int motor2DirPin = 4;
-int motor2StepPin = 5;
-long motorPos[2] = {0, 0};
-long motorPos_temp[2] = {0, 0};
+int motor2DirPin = 2;                      //digital pin 2
+int motor2StepPin = 3;                     //digital pin 3
+int motor3DirPin = 4;
+int motor3StepPin = 5;
+int motor1DirPin = 6;
+int motor1StepPin = 7;
+long motorPos[3] = {0, 0, 0};
+long motorPos_temp[3] = {0, 0, 0};
 boolean reading = true;
 String sensorstring = ""; 
 char readstring[ ] = "R\r";
@@ -20,16 +22,17 @@ char buffer[MAX_BUF];                     // Creates serial buffer
 char bufferSensor[MAX_BUF];
 
 // processCommand() Variables
-long posTemp[2] = {0, 0};
+long posTemp[3] = {0, 0, 0};
 int speedTemp = 0;
 int pumpNum = 5;
 int accelTemp = 0;
 
 //set up the accelStepper intance
 //the "1" tells it we are using a driver
-AccelStepper stepper[2] = {
+AccelStepper stepper[3] = {
   AccelStepper(1, motor1StepPin, motor1DirPin),
-  AccelStepper(1, motor2StepPin, motor2DirPin)
+  AccelStepper(1, motor2StepPin, motor2DirPin),
+  AccelStepper(1, motor3StepPin, motor3DirPin)
 };
 
 void setup()
@@ -39,6 +42,9 @@ void setup()
 
     stepper[1].setMaxSpeed(1500);
     stepper[1].setAcceleration(1000);
+
+    stepper[2].setMaxSpeed(1500);
+    stepper[2].setAcceleration(1000);
     Serial.begin(9600);
     Serial3.begin(9600);
     Serial3.print(readstring); //clear the buffer
@@ -48,7 +54,7 @@ void setup()
 void loop()
 {
     // Check serial port for inputs when any motor has finished moving
-    for (int i = 0; i < 2; i++){
+    for (int i = 0; i < 3; i++){
       if (stepper[i].distanceToGo() == 0){
         motorPos[i] = motorPos_temp[i];
         stepper[i].moveTo(motorPos[i]);      
@@ -59,6 +65,7 @@ void loop()
     //Serial.println(motorPos[0]);
     stepper[0].run();
     stepper[1].run();
+    stepper[2].run();
 }
 
 void checkSerial()
@@ -137,7 +144,7 @@ void processCommand()
   // if the string has no valid commands the Arduino will silently ignore it
 }
 
-int parsenumber(char c)
+long parsenumber(char c)
 {
   String tempCharString = "";
   for(int i = 0; i<MAX_BUF; i++)
