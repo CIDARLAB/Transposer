@@ -59,10 +59,12 @@ public class Pump {
         int uStepsAcc = (int)(flowAcc / ulPerUStep); // uL/s/s * uSteps/uL
         int uStepsSpeed = (int)(flowSpeed / ulPerUStep); // uL/s * uSteps/uL
         int uStepsMove = (int)(volume / ulPerUStep); // uL * uSteps/uL
-        //CodeString = "A P" + str(pumpID) + " D" + str(uStepsAcc) +";";
-        //port.write(CodeString);
-        //CodeString = "V P" + str(pumpID) + " D" + str(uStepsSpeed) +";";
-        //port.write(CodeString);        
+        CodeString = "A P" + str(pumpID) + " D" + str(uStepsAcc) +";";
+        port.write(CodeString);
+	println(CodeString);
+        CodeString = "V P" + str(pumpID) + " D" + str(uStepsSpeed) +";";
+        port.write(CodeString);        
+	println(CodeString);
         if (dir) CodeString = "F P" + str(pumpID) + " D" + str(uStepsMove) +";";
         else CodeString = "B P" + str(pumpID) + " D" + str(uStepsMove) +";";
         port.write(CodeString);

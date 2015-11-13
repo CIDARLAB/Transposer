@@ -1,7 +1,7 @@
 #include <AccelStepper.h>
 
-int maxMotorSpeed = 1500;                 //speed motor will accellerate to (steps/sec)
-int motorAccel = 2000;                    //steps/second/secoand to accelerate
+float maxMotorSpeed = 1500;                 //speed motor will accellerate to (steps/sec)
+float motorAccel = 2000;                    //steps/second/secoand to accelerate
 int motor2DirPin = 2;                      //digital pin 2
 int motor2StepPin = 3;                     //digital pin 3
 int motor3DirPin = 4;
@@ -37,13 +37,13 @@ AccelStepper stepper[3] = {
 
 void setup()
 {  
-    stepper[0].setMaxSpeed(1500);
+    stepper[0].setMaxSpeed(3000);
     stepper[0].setAcceleration(1000);
 
-    stepper[1].setMaxSpeed(1500);
+    stepper[1].setMaxSpeed(3000);
     stepper[1].setAcceleration(1000);
 
-    stepper[2].setMaxSpeed(1500);
+    stepper[2].setMaxSpeed(3000);
     stepper[2].setAcceleration(1000);
     Serial.begin(9600);
     Serial3.begin(9600);

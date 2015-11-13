@@ -12,6 +12,7 @@ float loopDelay; // in seconds
 Pump p1, p2, p3;
 boolean PUSH = true;
 boolean PULL = false;
+boolean toggle = false;
 boolean initControl = false;
 
 PImage cross, straight;
@@ -142,13 +143,25 @@ void pressMe() {
 }
 
 void dispenseLiquid() {
-  if (s1 >= v1) {
-    p1.dispense(v1, PUSH);
-    s1 -= v1;           
-    cp5.get(Slider.class,"Syringe1").setValue(s1);
-    cp5.get(Textfield.class,"Syringe1Fill").setText(str(s1));
+  if (toggle == true) {
+    if (s1 >= v1) {
+      p1.dispense(v1, PUSH);
+      s1 -= v1;           
+      toggle = false;
+      cp5.get(Slider.class,"Syringe1").setValue(s1);
+      cp5.get(Textfield.class,"Syringe1Fill").setText(str(s1));
+    }
+    else shutDown("Insufficient liquid to dispense, experiment stopped");
   }
-  else shutDown("Insufficient liquid to dispense, experiment stopped");
+  else
+    if (p1.getSyringeMaxCap()-s1 >= v1) {
+      p1.dispense(v1, PULL);
+      s1 += v1;           
+      toggle = true;
+      cp5.get(Slider.class,"Syringe1").setValue(s1);
+      cp5.get(Textfield.class,"Syringe1Fill").setText(str(s1));
+    }
+    else shutDown("Insufficient liquid to dispense, experiment stopped");
 }
 
 
