@@ -201,6 +201,7 @@ void guiSettings() {
   text("Control Outside Pump", 20, 334);
 } 
 
+//This will reset the buttons on the settings tab to SET VALUES every time you switch back to the settings tab
 void controlEvent(ControlEvent theControlEvent) {
   if (theControlEvent.isTab()) {
     cp5.get(Button.class, "Syringe1Update").setLabel("SET VALUES");

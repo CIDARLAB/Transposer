@@ -1,15 +1,22 @@
 #include <AccelStepper.h>
 
-float maxMotorSpeed = 1500;                 //speed motor will accellerate to (steps/sec)
-float motorAccel = 2000;                    //steps/second/secoand to accelerate
-int motor2DirPin = 2;                      //digital pin 2
-int motor2StepPin = 3;                     //digital pin 3
-int motor3DirPin = 4;
-int motor3StepPin = 5;
-int motor1DirPin = 6;
-int motor1StepPin = 7;
-long motorPos[3] = {0, 0, 0};
-long motorPos_temp[3] = {0, 0, 0};
+int numMotors = 6;
+float maxMotorSpeed = 3000;                 //speed motor will accellerate to (steps/sec)
+float motorAccel = 1000;                    //steps/second/secoand to accelerate
+int motor0DirPin = 2;                      //digital pin 2
+int motor0StepPin = 3;                     //digital pin 3
+int motor1DirPin = 4;
+int motor1StepPin = 5;
+int motor2DirPin = 6;
+int motor2StepPin = 7;
+int motor3DirPin = 8;
+int motor3StepPin = 9;
+int motor4DirPin = 10;
+int motor4StepPin = 11;
+int motor5DirPin = 12;
+int motor5StepPin = 13;
+long motorPos[numMotors] = {0, 0, 0, 0, 0, 0};
+long motorPos_temp[numMotors] = {0, 0, 0, 0, 0, 0};
 boolean reading = true;
 String sensorstring = ""; 
 char readstring[ ] = "R\r";
@@ -22,39 +29,37 @@ char buffer[MAX_BUF];                     // Creates serial buffer
 char bufferSensor[MAX_BUF];
 
 // processCommand() Variables
-long posTemp[3] = {0, 0, 0};
+long posTemp[numMotors] = {0, 0, 0, 0, 0, 0};
 int speedTemp = 0;
 int pumpNum = 5;
 int accelTemp = 0;
 
 //set up the accelStepper intance
 //the "1" tells it we are using a driver
-AccelStepper stepper[3] = {
+AccelStepper stepper[numMotors] = {
+  AccelStepper(1, motor0StepPin, motor0DirPin),
   AccelStepper(1, motor1StepPin, motor1DirPin),
   AccelStepper(1, motor2StepPin, motor2DirPin),
-  AccelStepper(1, motor3StepPin, motor3DirPin)
+  AccelStepper(1, motor3StepPin, motor3DirPin),
+  AccelStepper(1, motor4StepPin, motor4DirPin),
+  AccelStepper(1, motor5StepPin, motor5DirPin)
 };
 
 void setup()
-{  
-    stepper[0].setMaxSpeed(3000);
-    stepper[0].setAcceleration(1000);
-
-    stepper[1].setMaxSpeed(3000);
-    stepper[1].setAcceleration(1000);
-
-    stepper[2].setMaxSpeed(3000);
-    stepper[2].setAcceleration(1000);
-    Serial.begin(9600);
-    Serial3.begin(9600);
-    Serial3.print(readstring); //clear the buffer
+{
+   for (int i=0; i < numMotors; i++){  
+    stepper[i].setMaxSpeed(maxMotorSpeed);
+    stepper[i].setAcceleration(motorAccel);
+   }
+   
+   Serial.begin(9600);
 }
 
 
 void loop()
 {
     // Check serial port for inputs when any motor has finished moving
-    for (int i = 0; i < 3; i++){
+    for (int i = 0; i < numMotors; i++){
       if (stepper[i].distanceToGo() == 0){
         motorPos[i] = motorPos_temp[i];
         stepper[i].moveTo(motorPos[i]);      
@@ -63,9 +68,9 @@ void loop()
     checkSerial();
     //Serial.println(stepper[0].distanceToGo());
     //Serial.println(motorPos[0]);
-    stepper[0].run();
-    stepper[1].run();
-    stepper[2].run();
+    for (int i=0; i < numMotors; i++){  
+      stepper[i].run();
+    }
 }
 
 void checkSerial()
@@ -118,22 +123,22 @@ void processCommand()
   case  'V': // set velocity
     pumpNum = parsenumber('P');            //retrieve 1-indexed pump number
     speedTemp = parsenumber('D');          //retrieve speed value
-    stepper[pumpNum-1].setMaxSpeed(speedTemp);   //set speed value to 0-indexed motor
+    stepper[pumpNum].setMaxSpeed(speedTemp);   //set speed value to 0-indexed motor
     break;
   case  'B': // pull in fluid "backwards"
     pumpNum = parsenumber('P');            //retrieve 1-indexed pump number      
-    posTemp[pumpNum-1] = parsenumber('D');            //retrieve number of steps to move
-    motorPos_temp[pumpNum-1] += posTemp[pumpNum-1];               //move posTemp number of steps
+    posTemp[pumpNum] = parsenumber('D');            //retrieve number of steps to move
+    motorPos_temp[pumpNum] += posTemp[pumpNum];               //move posTemp number of steps
     break;
   case  'F': // push fluid "Forwards"
     pumpNum = parsenumber('P');            //retrieve 1-indexed pump number      
     posTemp[pumpNum-1] = parsenumber('D');            //retrieve number of steps to move
-    motorPos_temp[pumpNum-1] -= posTemp[pumpNum-1];      //move posTemp number of steps
+    motorPos_temp[pumpNum] -= posTemp[pumpNum];      //move posTemp number of steps
     break;
   case  'A': // set acceleration
     pumpNum = parsenumber('P');            //retrieve 1-indexed pump number
     accelTemp = parsenumber('D');          //retrieve speed value
-    stepper[pumpNum-1].setAcceleration(accelTemp);   //set acceleration value to 0-indexed motor
+    stepper[pumpNum].setAcceleration(accelTemp);   //set acceleration value to 0-indexed motor
   case  'R': //read from sensor
     Serial3.print(readstring);
     checkSerial3();
