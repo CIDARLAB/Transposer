@@ -1,7 +1,7 @@
 import processing.serial.*;
 
 public class PumpFlow {
-	int motorPort;	//M1, M2, M3, M4 from adafruit motor shield
+	int motorPort;	//0 for M1, 1 for M2, 2 for M3, 3 for M4 from adafruit motor shield
 	Serial port;
 
 	public PumpFlow(Serial port, int motorPort) {
@@ -29,6 +29,14 @@ public class PumpFlow {
    
     public void dispense(int uStepsMove, boolean dir) {
         String CodeString;
+
+	//--Comment out of dispense operations stop working
+	CodeString = "A P" + str(pumpID) + " D" + str(uStepsAcc) +";";
+        port.write(CodeString);
+        CodeString = "V P" + str(pumpID) + " D" + str(uStepsSpeed) +";";
+        port.write(CodeString);
+	//--end section
+
         if (dir) CodeString = "F P" + str(pumpID) + " D" + str(uStepsMove) +";";
         else CodeString = "B P" + str(pumpID) + " D" + str(uStepsMove) +";";
         port.write(CodeString);

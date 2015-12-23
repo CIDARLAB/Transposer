@@ -1,6 +1,14 @@
 #include <AccelStepper.h>
+#include <Wire.h>
+#include <Adafruit_MotorShield.h>
+#include "utility/Adafruit_PWMServoDriver.h"
 
-int numMotors = 6;
+#define numStepMotors (6)
+#define numDCMotors (3)
+
+//https://forums.adafruit.com/viewtopic.php?f=31&t=41144
+Adafruit_DCMotor*  InputArray[4];
+
 float maxMotorSpeed = 3000;                 //speed motor will accellerate to (steps/sec)
 float motorAccel = 1000;                    //steps/second/secoand to accelerate
 int motor0DirPin = 2;                      //digital pin 2
@@ -15,28 +23,25 @@ int motor4DirPin = 10;
 int motor4StepPin = 11;
 int motor5DirPin = 12;
 int motor5StepPin = 13;
-long motorPos[numMotors] = {0, 0, 0, 0, 0, 0};
-long motorPos_temp[numMotors] = {0, 0, 0, 0, 0, 0};
-boolean reading = true;
-String sensorstring = ""; 
-char readstring[ ] = "R\r";
+long motorPos[numStepMotors] = {0, 0, 0, 0, 0, 0};
+long motorPos_temp[numStepMotors] = {0, 0, 0, 0, 0, 0};
 
 // checkSerial() Variables
 int sofar=0;                                // Number of bytes in serial buffer
-int sofarSensor=0;
 #define MAX_BUF (64)                      // Maximum number of bytes to store in serial buffer
 char buffer[MAX_BUF];                     // Creates serial buffer
-char bufferSensor[MAX_BUF];
 
 // processCommand() Variables
-long posTemp[numMotors] = {0, 0, 0, 0, 0, 0};
+long posTemp[numStepMotors] = {0, 0, 0, 0, 0, 0};
 int speedTemp = 0;
 int pumpNum = 5;
+int pumpNumFlow = 5;
 int accelTemp = 0;
+int pwmSpeedTemp = 0;
 
 //set up the accelStepper intance
 //the "1" tells it we are using a driver
-AccelStepper stepper[numMotors] = {
+AccelStepper stepper[6] = {
   AccelStepper(1, motor0StepPin, motor0DirPin),
   AccelStepper(1, motor1StepPin, motor1DirPin),
   AccelStepper(1, motor2StepPin, motor2DirPin),
@@ -45,13 +50,31 @@ AccelStepper stepper[numMotors] = {
   AccelStepper(1, motor5StepPin, motor5DirPin)
 };
 
+// Create the motor shield object with the default I2C address
+Adafruit_MotorShield AFMS = Adafruit_MotorShield(); 
+
+// Select which 'port' M1, M2, M3 or M4. In this case, M1
+//If you stack motor shields, add more motors here
+Adafruit_DCMotor *Input0 = AFMS.getMotor(1);
+Adafruit_DCMotor *Input1 = AFMS.getMotor(2);
+Adafruit_DCMotor *Input2 = AFMS.getMotor(3);
+Adafruit_DCMotor *Input3 = AFMS.getMotor(4);
+
 void setup()
 {
-   for (int i=0; i < numMotors; i++){  
+   for (int i=0; i < numStepMotors; i++){  
     stepper[i].setMaxSpeed(maxMotorSpeed);
     stepper[i].setAcceleration(motorAccel);
    }
+   AFMS.begin();
    
+   //https://forums.adafruit.com/viewtopic.php?f=31&t=41144
+   //If you stack motor shields, add more motors here
+   InputArray[0] = Input0;
+   InputArray[1] = Input1;
+   InputArray[2] = Input2;
+   InputArray[3] = Input3;
+
    Serial.begin(9600);
 }
 
@@ -59,7 +82,7 @@ void setup()
 void loop()
 {
     // Check serial port for inputs when any motor has finished moving
-    for (int i = 0; i < numMotors; i++){
+    for (int i = 0; i < numStepMotors; i++){
       if (stepper[i].distanceToGo() == 0){
         motorPos[i] = motorPos_temp[i];
         stepper[i].moveTo(motorPos[i]);      
@@ -68,7 +91,7 @@ void loop()
     checkSerial();
     //Serial.println(stepper[0].distanceToGo());
     //Serial.println(motorPos[0]);
-    for (int i=0; i < numMotors; i++){  
+    for (int i=0; i < numStepMotors; i++){  
       stepper[i].run();
     }
 }
@@ -94,26 +117,6 @@ void checkSerial()
   }
 }
 
-void checkSerial3()
-{
-  // listen for sensor data
-  while(Serial3.available() > 0) {           // if something is available
-    char c=Serial3.read();                   // get it
-    Serial.print(c);                         // print to Processing sketch
-    if(sofarSensor<MAX_BUF) 
-      bufferSensor[sofarSensor++]=c;         // store it
-    if(bufferSensor[sofarSensor-1]=='\r') 
-      break;				     // checks for command termination using ';'
-  }
-
-  if(sofarSensor>0 && bufferSensor[sofarSensor-1]=='\r') {
-    // we got data and it ends with a carriage return
-    bufferSensor[sofarSensor]=0;             // set the end of the buffer to zero for string function compatibility
-    Serial.print(F("\n"));                   // echo line feed so processing knows the data is complete
-    readySensor();
-  }
-}
-
 void processCommand() 
 {
 
@@ -121,27 +124,30 @@ void processCommand()
   int cmd=buffer[0];
   switch(cmd) {
   case  'V': // set velocity
-    pumpNum = parsenumber('P');            //retrieve 1-indexed pump number
+    pumpNum = parsenumber('P');            //retrieve 0-indexed pump number
     speedTemp = parsenumber('D');          //retrieve speed value
     stepper[pumpNum].setMaxSpeed(speedTemp);   //set speed value to 0-indexed motor
     break;
   case  'B': // pull in fluid "backwards"
-    pumpNum = parsenumber('P');            //retrieve 1-indexed pump number      
+    pumpNum = parsenumber('P');            //retrieve 0-indexed pump number      
     posTemp[pumpNum] = parsenumber('D');            //retrieve number of steps to move
     motorPos_temp[pumpNum] += posTemp[pumpNum];               //move posTemp number of steps
     break;
   case  'F': // push fluid "Forwards"
-    pumpNum = parsenumber('P');            //retrieve 1-indexed pump number      
+    pumpNum = parsenumber('P');            //retrieve 0-indexed pump number      
     posTemp[pumpNum-1] = parsenumber('D');            //retrieve number of steps to move
     motorPos_temp[pumpNum] -= posTemp[pumpNum];      //move posTemp number of steps
     break;
   case  'A': // set acceleration
-    pumpNum = parsenumber('P');            //retrieve 1-indexed pump number
+    pumpNum = parsenumber('P');            //retrieve 0-indexed pump number
     accelTemp = parsenumber('D');          //retrieve speed value
     stepper[pumpNum].setAcceleration(accelTemp);   //set acceleration value to 0-indexed motor
-  case  'R': //read from sensor
-    Serial3.print(readstring);
-    checkSerial3();
+    break;
+  case  'E': // Turn on output 
+    pumpNumFlow = parsenumber('M');            //retrieve 0-indexed input pump number
+    pwmSpeedTemp = parsenumber('D');          //retrieve speed value
+    InputArray[pumpNumFlow]->setSpeed(pwmSpeedTemp);   //set motor speed value to 0-indexed motor
+    InputArray[pumpNumFlow]->run(FORWARD);   //run motor 
     break;
   default:  
     break;
@@ -171,9 +177,3 @@ void ready() {
   sofar=0;                  
   // resets buffer pointer, essentially clearing buffer because strings of characters are terminated by a zero byte
 }
-
-void readySensor() {
-  sofarSensor=0;                  
-  // resets buffer pointer, essentially clearing buffer because strings of characters are terminated by a zero byte
-}
-

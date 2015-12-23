@@ -13,7 +13,7 @@ float syringeInnerD = 14.74; // mm
 int syringeMaxCap = 10000; // uL
 float pitch = 0.8; // mm/rev
 float stepAngle = 1.8; // deg/step
-int uStepsPerStep = 8; // uSteps/step
+int uStepsPerStep = 1; // uSteps/step
 int motorMaxSpeed = 1500; // uSteps/s
 // Flow Profile
 float flowAcc = 2000; // uL/s/s
