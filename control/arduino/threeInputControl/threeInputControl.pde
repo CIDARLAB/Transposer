@@ -4,6 +4,14 @@ import controlP5.*;
 ControlP5 cp5;
 Serial myPort; 
 
+//Graph display variables
+DirectedGraph g=null;
+int padding=30;
+int numNodes = 12;
+Node[] nodes = new Node[numNodes];
+boolean inputFlag = false;
+
+
 //Flow Pump variables
 int pwmSpeed = 100;	//PWM duty cycle from 0-255
 
@@ -28,7 +36,7 @@ int dispenseVolume;
 
 //Topology Variables
 int numControlPumps = 6;
-int numInputs = 3;
+int numInputs = 6;
 
 //Create arrays of control and flow pumps
 Pump[] controlPumps = new Pump[numControlPumps];
@@ -59,6 +67,7 @@ void setup() {
   println(Serial.list());
   myPort = new Serial(this, Serial.list()[7], 9600); // Open the port you are using at the rate you want:
   
+
   //Create Pump Objects
   for (int j = 0; j < controlPumps.length; j++){
     controlPumps[j] = new Pump(myPort, j); 
@@ -79,14 +88,22 @@ void setup() {
      .setLabel(" Controller ")
      .setColorLabel(0xff000000)
      .setColorActive(0xffaaaaaa)
-     .setWidth(width/2)
+     .setWidth(width/3)
      ;  
      
+  cp5.addTab("inputs")
+     .setLabel(" Inputs ")
+     .setColorLabel(0xff000000)
+     .setColorActive(0xffaaaaaa)
+     .setWidth(width/3)
+     .activateEvent(true)
+     ;
+
   cp5.addTab("settings")
      .setLabel(" Settings ")
      .setColorLabel(0xff000000)
      .setColorActive(0xffaaaaaa)
-     .setWidth(width/2)
+     .setWidth(width/3)
      .activateEvent(true)
      ;
 
@@ -97,6 +114,7 @@ void setup() {
      .setColor(color(50,50,50))
      .setColorCursor(color(0,0,0))
      .setText("4000")
+     //.setVisible(false)
      .setLabel("Air Displacement (uL)")
      ;   
    
@@ -109,6 +127,7 @@ void setup() {
      .setLabel(" Start Flow ")
      .setColorBackground(0xff00ff00 + 0x88000000)
      .setColorForeground(0xff00ff00)
+     //.setVisible(false)
      .setOff()
      ;
 
@@ -118,16 +137,53 @@ void setup() {
      .setLabel(" Actuate Control ")
      .setColorBackground(0xff00ff00 + 0x88000000)
      .setColorForeground(0xff00ff00)
+     //.setVisible(false)
      .setOff()
      ;
 
   cp5.addButton("return")
      .setPosition(375,200)
      .setSize(75,35)
-     .setLabel(" Actuate Control ")
+     .setLabel(" Return to Origin")
+     .setColorBackground(0xff00ff00 + 0x88000000)
+     .setColorForeground(0xff00ff00)
+     //.setVisible(false)
+     .setOff()
+     ;
+
+  for (int j = 0; j < flowPumps.length; j++){
+   cp5.addTextfield("Output" + j)
+     .setPosition(width-100, 230 + 50 * (j+1))
+     .setSize(25,25)
+     .setFont(font)
+     .setColor(color(50,50,50))
+     .setColorCursor(color(0,0,0))
+     .setText(str(j))
+     .setLabel("Output "+ j)
+     .setVisible(true)
+     .setId(j)
+     ;   
+  }
+
+    cp5.addTextfield("numInputsTxt")
+     .setPosition(width/2-50, height/2)
+     .setSize(25,25)
+     .setFont(font)
+     .setColor(color(50,50,50))
+     .setColorCursor(color(0,0,0))
+     .setLabel("Number of Inputs")
+     .setText(str(numInputs))
+     .setTab("inputs")
+     ;     
+
+    cp5.addButton("numInputsBtn")
+     .setPosition(width/2+50, height/2)
+     .setSize(60,35)
+     .setLabel(" Enter ")
      .setColorBackground(0xff00ff00 + 0x88000000)
      .setColorForeground(0xff00ff00)
      .setOff()
+     .setTab("inputs")
      ;
 }
 
@@ -138,17 +194,38 @@ void draw() {
   rect(0 , 20, width, height-40);
   if (cp5.getTab("default").isActive()) guiDefault();
   if (cp5.getTab("settings").isActive()) guiSettings();
+  if (cp5.getTab("inputs").isActive()) guiInputs();
 }
 
 void guiDefault() {  
   fill(0); 
   dispenseVolume = int(cp5.get(Textfield.class,"controlVolume").getText().trim());   
-  text("Flow:", 20, 110);
-  text("Control:", 20, 200, 75, 170); 
+  text("Flow Pumps:", 20, 110);
+  text("Control Pumps:", 20, 200, 125, 170); 
+  text("Flow Routing:", 20 , 300);
+  for (int j = 0; j < numInputs; j++){
+    text(j, 150, 250 + 50 * (j+1));
+  }
+  makeGraph();
+  g.setFlowAlgorithm(new ForceDirectedFlowAlgorithm());
+  g.draw();
 }
 
 void actuate() {
 
+}
+
+void numInputsBtn(){
+  numInputs = int(cp5.get(Textfield.class, "numInputsTxt").getText().trim());
+  cp5.get(Button.class, "numInputsBtn").setLabel("SAVED!");
+  for (int j = 0; j < numInputs; j++){
+   cp5.get(Textfield.class, "Output"+j).setVisible(true);
+  }
+  if (numInputs < 6) {
+    for (int i = numInputs; i < 6; i++){
+      cp5.get(Textfield.class, "Output"+i).setVisible(false);
+    }
+  }
 }
 
 void startFlow() {
@@ -156,7 +233,7 @@ void startFlow() {
     cp5.get(Button.class,"startFlow").setLabel(" Stop Flow")
        .setColorBackground(0xffff0000 + 0x88000000)
        .setColorForeground(0xffff0000);
-    for (int j = 0; j < flowPumps.length; j++){
+    for (int j = 0; j < numInputs; j++){
       flowPumps[j].dispenseFlow(pwmSpeed);
     }
   }
@@ -164,7 +241,7 @@ void startFlow() {
     cp5.get(Button.class,"startFlow").setLabel(" Start Flow")
        .setColorBackground(0xff00ff00 + 0x88000000)
        .setColorForeground(0xff00ff00);
-    for (int j = 0; j < flowPumps.length; j++){
+    for (int j = 0; j < numInputs; j++){
       flowPumps[j].dispenseFlow(0);
     }
   }
@@ -180,6 +257,10 @@ void shutDown(String message) {
   noLoop();
 }
 
+void guiInputs() {
+  fill(0);
+} 
+
 void guiSettings() {
   fill(#0000ff + 0x88000000);
   rect(20, 60, width-40, 105, 10);
@@ -194,6 +275,7 @@ void controlEvent(ControlEvent theControlEvent) {
   if (theControlEvent.isTab()) {
     cp5.get(Button.class, "FlowUpdate").setLabel("SET VALUES");
     cp5.get(Button.class, "ControlUpdate").setLabel("SET VALUES");
+    cp5.get(Button.class, "numInputsBtn").setLabel("SET VALUES");
     pumpGetControlValues();
     pumpGetFlowValues();
   }
@@ -392,3 +474,74 @@ void setHardware(float temp_syringeInnerD, int temp_syringeMaxCap, float temp_pi
 void setFlowHardware(int temp_pwmSpeed) { 
   pwmSpeed = ((temp_pwmSpeed >= 0) && (temp_pwmSpeed <= 255))  ? temp_pwmSpeed : pwmSpeed; // Only update if input is a positive number
 }
+
+void makeGraph()
+{
+  // define a graph
+  g = new DirectedGraph();
+
+  // define some nodes
+  //Node n0 = new Node("0",width,padding);
+  //Node n1 = new Node("1",padding,padding);
+  //Node n2 = new Node("2",padding,height-padding);
+  //Node n3 = new Node("3",width-padding,height-padding);
+  //Node n4 = new Node("4",width-padding,padding);
+  //Node n5 = new Node("5",width-3*padding,height-2*padding);
+  //Node n7 = new Node("6",width-3*padding,2*padding);
+  //Node n8 = new Node("6",width-3*padding,2*padding);
+  //Node n9 = new Node("6",width-3*padding,2*padding);
+  //Node n10 = new Node("6",width-3*padding,2*padding);
+  //Node n11 = new Node("6",width-3*padding,2*padding);
+
+  nodes[0] = new Node("0",width/6, 300);
+  nodes[1] = new Node("1",2*(width/6), 300);
+  nodes[2] = new Node("2",150 + 4*(width/6), 300);
+  nodes[3] = new Node("3",150 + 5*(width/6), 300);
+  nodes[4] = new Node("4",150 + (width/6),350);
+  nodes[5] = new Node("5",150 + 2*(width/6),350);
+  nodes[6] = new Node("6",150 + 3*(width/6),350);
+  nodes[7] = new Node("7",150 + 4*(width/6),350);
+  nodes[8] = new Node("8",150 + 5*(width/6),350);
+  nodes[9] = new Node("9",150 + (width/6), 400);
+  nodes[10] = new Node("10",150 + 3*(width/6), 400);
+  nodes[11] = new Node("11",150 + 5*(width/6), 400);
+
+  // add nodes to graph
+  //g.addNode(n1);
+  //g.addNode(n2);
+  //g.addNode(n3);
+  //g.addNode(n4);
+  //g.addNode(n5);
+  //g.addNode(n6);
+
+  for (int j = 0; j< nodes.length; j++){
+    g.addNode(nodes[j]);
+  }
+
+  // link nodes
+  //g.linkNodes(n1,n2);
+  //g.linkNodes(n2,n3);
+  //g.linkNodes(n3,n4);
+  //g.linkNodes(n4,n1);
+  //g.linkNodes(n1,n3);
+  //g.linkNodes(n2,n4);
+  //g.linkNodes(n5,n6);
+  //g.linkNodes(n1,n6);
+  //g.linkNodes(n2,n5);
+  g.linkNodes(nodes[0], nodes[1]);
+  g.linkNodes(nodes[1], nodes[2]);
+  g.linkNodes(nodes[1], nodes[6]);
+  g.linkNodes(nodes[2], nodes[3]);
+  g.linkNodes(nodes[2], nodes[8]);
+  g.linkNodes(nodes[4], nodes[5]);
+  g.linkNodes(nodes[5], nodes[2]);
+  g.linkNodes(nodes[5], nodes[6]);
+  g.linkNodes(nodes[6], nodes[7]);
+  g.linkNodes(nodes[6], nodes[11]);
+  g.linkNodes(nodes[7], nodes[3]);
+  g.linkNodes(nodes[7], nodes[8]);
+  g.linkNodes(nodes[9], nodes[10]);
+  g.linkNodes(nodes[10], nodes[7]);
+  g.linkNodes(nodes[10], nodes[11]);
+}
+
