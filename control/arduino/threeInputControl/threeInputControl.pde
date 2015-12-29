@@ -35,11 +35,11 @@ int uStepsMove; // uL * uSteps/uL
 int dispenseVolume;
 
 //Topology Variables
-int numControlPumps = 6;
+int numControlPumps;
 int numInputs = 6;
 
 //Create arrays of control and flow pumps
-Pump[] controlPumps = new Pump[numControlPumps];
+Pump[] controlPumps; 
 PumpFlow[] flowPumps = new PumpFlow[numInputs];
 
 //Constants
@@ -49,17 +49,23 @@ boolean PULL = false;
 //Flags
 boolean initControl = false;
 
-//test variables
-int count;
+//Display Variables
+int margin = 150;
+int textBoxWidth = 100;
+int textBoxHeight = 35;
+int buttonHeight = 35;
+int buttonWidth = 100;
 
 PImage cross, straight;
 PFont font;
 
 void setup() {
-  size(800,650);
+  fullScreen();
   font = createFont("AndaleMono-48.vlw",15, false);
   textFont(font);
   ControlFont cfont = new ControlFont(font,241);
+  numControlPumps = numXposers(numInputs);
+  println(numControlPumps);
   controlPumps = new Pump[numControlPumps];
   flowPumps = new PumpFlow[numInputs];
 
@@ -108,13 +114,12 @@ void setup() {
      ;
 
    cp5.addTextfield("controlVolume")
-     .setPosition(250,200)
-     .setSize(100,35)
+     .setPosition(margin+6*buttonWidth,2*(height/8))
+     .setSize(textBoxWidth,textBoxHeight)
      .setFont(font)
      .setColor(color(50,50,50))
      .setColorCursor(color(0,0,0))
      .setText("4000")
-     //.setVisible(false)
      .setLabel("Air Displacement (uL)")
      ;   
    
@@ -122,28 +127,36 @@ void setup() {
   drawControlSettings("settings", 100, 210);
 
   cp5.addButton("startFlow")
-     .setPosition(150, 100)
-     .setSize(60,35)
+     .setPosition(margin, 1*(height/8))
+     .setSize(buttonWidth,buttonHeight)
      .setLabel(" Start Flow ")
      .setColorBackground(0xff00ff00 + 0x88000000)
      .setColorForeground(0xff00ff00)
-     //.setVisible(false)
      .setOff()
      ;
 
   cp5.addButton("actuate")
-     .setPosition(150,200)
-     .setSize(75,35)
+     .setPosition(margin+2*buttonWidth,2*(height/8))
+     .setSize(buttonWidth,buttonHeight)
      .setLabel(" Actuate Control ")
      .setColorBackground(0xff00ff00 + 0x88000000)
      .setColorForeground(0xff00ff00)
-     //.setVisible(false)
+     .setOff()
+     ;
+
+  cp5.addButton("route")
+     .setPosition(margin,2*(height/8))
+     .setSize(buttonWidth,buttonHeight)
+     .setLabel("Route")
+     .setColorBackground(0xff00ff00 + 0x88000000)
+     .setColorForeground(0xff00ff00)
      .setOff()
      ;
 
   cp5.addButton("return")
-     .setPosition(375,200)
-     .setSize(75,35)
+     .setPosition(margin+4*buttonWidth,2*(height/8))
+     .setSize(buttonWidth,buttonHeight)
+     //.setSize(75,35)
      .setLabel(" Return to Origin")
      .setColorBackground(0xff00ff00 + 0x88000000)
      .setColorForeground(0xff00ff00)
@@ -153,8 +166,8 @@ void setup() {
 
   for (int j = 0; j < flowPumps.length; j++){
    cp5.addTextfield("Output" + j)
-     .setPosition(width-100, 230 + 50 * (j+1))
-     .setSize(25,25)
+     .setPosition(width-100, 3*(height/8) + (textBoxHeight*2) * (j+1))
+     .setSize(25,textBoxHeight)
      .setFont(font)
      .setColor(color(50,50,50))
      .setColorCursor(color(0,0,0))
@@ -167,7 +180,7 @@ void setup() {
 
     cp5.addTextfield("numInputsTxt")
      .setPosition(width/2-50, height/2)
-     .setSize(25,25)
+     .setSize(25,textBoxHeight)
      .setFont(font)
      .setColor(color(50,50,50))
      .setColorCursor(color(0,0,0))
@@ -178,7 +191,7 @@ void setup() {
 
     cp5.addButton("numInputsBtn")
      .setPosition(width/2+50, height/2)
-     .setSize(60,35)
+     .setSize(buttonWidth,buttonHeight)
      .setLabel(" Enter ")
      .setColorBackground(0xff00ff00 + 0x88000000)
      .setColorForeground(0xff00ff00)
@@ -200,11 +213,11 @@ void draw() {
 void guiDefault() {  
   fill(0); 
   dispenseVolume = int(cp5.get(Textfield.class,"controlVolume").getText().trim());   
-  text("Flow Pumps:", 20, 110);
-  text("Control Pumps:", 20, 200, 125, 170); 
-  text("Flow Routing:", 20 , 300);
+  text("Flow Pumps:", 20, 1*(height/8));
+  text("Control Pumps:", 20, 2*(height/8)); 
+  text("Flow Routing:", 20 , 3*(height/8));
   for (int j = 0; j < numInputs; j++){
-    text(j, 150, 250 + 50 * (j+1));
+    text(j, margin, 3*(height/8) + (textBoxHeight*2) * (j+1));
   }
   makeGraph();
   g.setFlowAlgorithm(new ForceDirectedFlowAlgorithm());
@@ -481,18 +494,6 @@ void makeGraph()
   g = new DirectedGraph();
 
   // define some nodes
-  //Node n0 = new Node("0",width,padding);
-  //Node n1 = new Node("1",padding,padding);
-  //Node n2 = new Node("2",padding,height-padding);
-  //Node n3 = new Node("3",width-padding,height-padding);
-  //Node n4 = new Node("4",width-padding,padding);
-  //Node n5 = new Node("5",width-3*padding,height-2*padding);
-  //Node n7 = new Node("6",width-3*padding,2*padding);
-  //Node n8 = new Node("6",width-3*padding,2*padding);
-  //Node n9 = new Node("6",width-3*padding,2*padding);
-  //Node n10 = new Node("6",width-3*padding,2*padding);
-  //Node n11 = new Node("6",width-3*padding,2*padding);
-
   nodes[0] = new Node("0",width/6, 300);
   nodes[1] = new Node("1",2*(width/6), 300);
   nodes[2] = new Node("2",150 + 4*(width/6), 300);
@@ -507,13 +508,6 @@ void makeGraph()
   nodes[11] = new Node("11",150 + 5*(width/6), 400);
 
   // add nodes to graph
-  //g.addNode(n1);
-  //g.addNode(n2);
-  //g.addNode(n3);
-  //g.addNode(n4);
-  //g.addNode(n5);
-  //g.addNode(n6);
-
   for (int j = 0; j< nodes.length; j++){
     g.addNode(nodes[j]);
   }
@@ -545,3 +539,7 @@ void makeGraph()
   g.linkNodes(nodes[10], nodes[11]);
 }
 
+int numXposers(int n) {
+  if (n == 1) return 0;
+  return n-1+numXposers(n-1);
+}
