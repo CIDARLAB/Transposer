@@ -9,8 +9,10 @@ class XposerNode
 {
   int stage;
   int level;
+  String label;
 
-  XposerNode(int _level, int _stage) {
+  XposerNode(String _label, int _level, int _stage) {
+    label=_label;
     level=_level; 
     stage=_stage;
   }

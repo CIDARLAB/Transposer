@@ -4,12 +4,15 @@ import controlP5.*;
 ControlP5 cp5;
 Serial myPort; 
 
+//Topology Variables
+int numControlPumps;
+int numInputs = 6;
+
 //Graph display variables
-DirectedGraph g=null;
 int padding=30;
-int numNodes = 12;
-Node[] nodes = new Node[numNodes];
 boolean inputFlag = false;
+DirectedGraph g = new DirectedGraph();
+ArrayList<XposerNode> xposernodes = new ArrayList<XposerNode>();
 
 
 //Flow Pump variables
@@ -34,10 +37,6 @@ int uStepsSpeed; // uL/s * uSteps/uL
 int uStepsMove; // uL * uSteps/uL
 int dispenseVolume;
 
-//Topology Variables
-int numControlPumps;
-int numInputs = 6;
-
 //Create arrays of control and flow pumps
 Pump[] controlPumps; 
 PumpFlow[] flowPumps = new PumpFlow[numInputs];
@@ -50,7 +49,7 @@ boolean PULL = false;
 boolean initControl = false;
 
 //Display Variables
-int margin = 150;
+int margin = 100;
 int textBoxWidth = 100;
 int textBoxHeight = 35;
 int buttonHeight = 35;
@@ -71,7 +70,7 @@ void setup() {
 
   //Setup Serial Connection
   println(Serial.list());
-  myPort = new Serial(this, Serial.list()[7], 9600); // Open the port you are using at the rate you want:
+  //myPort = new Serial(this, Serial.list()[7], 9600); // Open the port you are using at the rate you want:
   
 
   //Create Pump Objects
@@ -156,17 +155,15 @@ void setup() {
   cp5.addButton("return")
      .setPosition(margin+4*buttonWidth,2*(height/8))
      .setSize(buttonWidth,buttonHeight)
-     //.setSize(75,35)
      .setLabel(" Return to Origin")
      .setColorBackground(0xff00ff00 + 0x88000000)
      .setColorForeground(0xff00ff00)
-     //.setVisible(false)
      .setOff()
      ;
 
   for (int j = 0; j < flowPumps.length; j++){
    cp5.addTextfield("Output" + j)
-     .setPosition(width-100, 3*(height/8) + (textBoxHeight*2) * (j+1))
+     .setPosition(width-margin, (3*(height/8)-(textBoxHeight/2)) + (textBoxHeight*2) * (j+1))
      .setSize(25,textBoxHeight)
      .setFont(font)
      .setColor(color(50,50,50))
@@ -217,10 +214,8 @@ void guiDefault() {
   text("Control Pumps:", 20, 2*(height/8)); 
   text("Flow Routing:", 20 , 3*(height/8));
   for (int j = 0; j < numInputs; j++){
-    text(j, margin, 3*(height/8) + (textBoxHeight*2) * (j+1));
+    text(j, 25, 3*(height/8) + (textBoxHeight*2) * (j+1));
   }
-  makeGraph();
-  g.setFlowAlgorithm(new ForceDirectedFlowAlgorithm());
   g.draw();
 }
 
@@ -239,6 +234,10 @@ void numInputsBtn(){
       cp5.get(Textfield.class, "Output"+i).setVisible(false);
     }
   }
+  //g.setFlowAlgorithm(new ForceDirectedFlowAlgorithm());
+  xposernodes.clear();
+  g.clearNodes();
+  makeGraph();
 }
 
 void startFlow() {
@@ -490,55 +489,146 @@ void setFlowHardware(int temp_pwmSpeed) {
 
 void makeGraph()
 {
-  // define a graph
-  g = new DirectedGraph();
+  float i2 = numInputs/2.0;
+  //int numNodes = (2+ceil(i2)) + (2+floor(i2)) + (int(sq(numInputs))-4);
+  //int nodesPerLevel;
+  int count=0;
+  ArrayList<Node> nodes = new ArrayList<Node>();
 
-  // define some nodes
-  nodes[0] = new Node("0",width/6, 300);
-  nodes[1] = new Node("1",2*(width/6), 300);
-  nodes[2] = new Node("2",150 + 4*(width/6), 300);
-  nodes[3] = new Node("3",150 + 5*(width/6), 300);
-  nodes[4] = new Node("4",150 + (width/6),350);
-  nodes[5] = new Node("5",150 + 2*(width/6),350);
-  nodes[6] = new Node("6",150 + 3*(width/6),350);
-  nodes[7] = new Node("7",150 + 4*(width/6),350);
-  nodes[8] = new Node("8",150 + 5*(width/6),350);
-  nodes[9] = new Node("9",150 + (width/6), 400);
-  nodes[10] = new Node("10",150 + 3*(width/6), 400);
-  nodes[11] = new Node("11",150 + 5*(width/6), 400);
-
-  // add nodes to graph
-  for (int j = 0; j< nodes.length; j++){
-    g.addNode(nodes[j]);
+//Populate xposer nodes
+  //Determine number of nodes per level
+  for (int j=0; j<numInputs; j++){
+    //Populate all nodes in each level
+    for (int i=0; i<numInputs+2; i++){
+      //First check for source and terminal node
+      if (i == 0) { 
+	xposernodes.add(new XposerNode("S"+j, j, i));
+      }
+      else if (i == (numInputs+2) - 1) { 
+	xposernodes.add(new XposerNode("T"+j, j, i));
+      }
+      else {
+	//Then check for odd stage on level 0
+	if (j == 0 && i%2 == 1){
+	  xposernodes.add(new XposerNode("D" + count, j, i));
+	  count++;
+	}
+	//Then check for odd stage on level n-1 if n is even
+	else if (j == numInputs - 1 && numInputs%2 == 0 && i%2 == 1){
+	  xposernodes.add(new XposerNode("D" + count, j, i));
+	  count++;
+	}
+	//Then check for even stage on level n-1 if n is odd
+	else if (j == numInputs - 1 && numInputs%2 == 1 && i%2 == 0){
+	  xposernodes.add(new XposerNode("D" + count, j, i));
+	  count++;
+	}
+	else if (j != 0 && j != numInputs - 1){
+	  xposernodes.add(new XposerNode("D" + count, j, i));
+	  count++;
+	}	  
+      } 
+    }
   }
 
-  // link nodes
-  //g.linkNodes(n1,n2);
-  //g.linkNodes(n2,n3);
-  //g.linkNodes(n3,n4);
-  //g.linkNodes(n4,n1);
-  //g.linkNodes(n1,n3);
-  //g.linkNodes(n2,n4);
-  //g.linkNodes(n5,n6);
-  //g.linkNodes(n1,n6);
-  //g.linkNodes(n2,n5);
-  g.linkNodes(nodes[0], nodes[1]);
-  g.linkNodes(nodes[1], nodes[2]);
-  g.linkNodes(nodes[1], nodes[6]);
-  g.linkNodes(nodes[2], nodes[3]);
-  g.linkNodes(nodes[2], nodes[8]);
-  g.linkNodes(nodes[4], nodes[5]);
-  g.linkNodes(nodes[5], nodes[2]);
-  g.linkNodes(nodes[5], nodes[6]);
-  g.linkNodes(nodes[6], nodes[7]);
-  g.linkNodes(nodes[6], nodes[11]);
-  g.linkNodes(nodes[7], nodes[3]);
-  g.linkNodes(nodes[7], nodes[8]);
-  g.linkNodes(nodes[9], nodes[10]);
-  g.linkNodes(nodes[10], nodes[7]);
-  g.linkNodes(nodes[10], nodes[11]);
+  float canvasWidthIncrements_fl = (width - (margin))/(2.0+numInputs);
+  int canvasWidthIncrements = ceil(canvasWidthIncrements_fl);
+
+  //Give xposer nodes a position
+  for(XposerNode currentNode: xposernodes) {
+    nodes.add(new Node(currentNode.label, (margin) + (currentNode.stage * canvasWidthIncrements), 3*(height/8) + (textBoxHeight*2) * (currentNode.level+1))); 
+  }
+ 
+  // add nodes to graph
+  //for (int j = 0; j< nodes.length; j++){
+  for (int j=0; j<nodes.size(); j++){
+    Node addnode = nodes.get(j);
+    g.addNode(addnode);
+  }
+
+  // link nodes horizontally
+  for (int j=0; j<xposernodes.size(); j++){
+    XposerNode currentNode = xposernodes.get(j);
+    Node linknode1 = nodes.get(j);
+    Node linknode2;
+    //If stage is 0, we are on a source node. Connect to first decision node
+    if (currentNode.label.contains("S") || currentNode.label.contains("D")){
+      linknode2 = nodes.get(j+1);
+      g.linkNodes(linknode1, linknode2);
+    }
+  }    
+  
+
+  // link nodes vertically
+  for (int j=0; j<numInputs; j++){
+    int t = 1;
+    Node linknode1;
+    Node linknode2;
+   //Populate all nodes in each level
+    for (int i=0; i<numInputs+2; i++){
+      //First check for source and terminal node
+      if (i != 0 && i!= (numInputs+2) - 1) {
+	//Then check for odd stage on level 0
+	if (j == 0){
+	  if (findIndex(j,i)!=0){
+	    linknode1 = nodes.get(findIndex(j,i));
+	    linknode2 = nodes.get(findNextIndex(j+1, i+1));
+	    g.linkNodes(linknode1, linknode2); 
+	  }
+	}
+	//Then check for odd stage on level n-1 if n is even
+	else if (j == numInputs - 1){
+	  if (findIndex(j,i)!=0){
+	    linknode1 = nodes.get(findIndex(j,i));
+	    linknode2 = nodes.get(findNextIndex(j-1, i+1));
+	    g.linkNodes(linknode1, linknode2); 
+	  }
+	}
+	//Then check for even stage on level n-1 if n is odd
+	else if (j%2 == 0){
+	  linknode1 = nodes.get(findIndex(j,i));
+	  linknode2 = nodes.get(findNextIndex(j+t, i+1));
+	  t *= -1; 
+	  g.linkNodes(linknode1, linknode2); 
+	}
+	else if (j%2 == 1){
+	  linknode1 = nodes.get(findIndex(j,i));
+	  linknode2 = nodes.get(findNextIndex(j-t, i+1));
+	  t *= -1; 
+	  g.linkNodes(linknode1, linknode2); 
+	}	  
+      } 
+    }
+  }
 }
 
+int findIndex(int level, int stage) {
+  int index=0;
+  for (int i = 1; i < xposernodes.size(); i++){
+    if (xposernodes.get(i).level == level && xposernodes.get(i).stage == stage) {
+      index = i;
+      break;
+    }
+  }
+  return index;
+}
+
+int findNextIndex(int level, int _stage) {
+  int index=0;
+  int stage = _stage;
+  for (int i = 1; i < xposernodes.size(); i++){
+    if (xposernodes.get(i).level == level && xposernodes.get(i).stage == stage) {
+      index = i;
+      break;
+    }
+    else if (xposernodes.get(i).level == level && xposernodes.get(i+1).stage == stage+1) {
+      index = i+1;
+      break;
+    }
+  }
+  return index;
+}
+  
 int numXposers(int n) {
   if (n == 1) return 0;
   return n-1+numXposers(n-1);

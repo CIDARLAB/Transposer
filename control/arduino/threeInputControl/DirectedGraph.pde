@@ -5,6 +5,8 @@
  */
 
 // this class models a directed graph, consisting of any number of nodes
+// Ryan Silva added clearNodes method
+
 class DirectedGraph
 {
   ArrayList<Node> nodes = new ArrayList<Node>();
@@ -18,6 +20,10 @@ class DirectedGraph
       nodes.add(node); }}
 
   int size() { return nodes.size(); }
+
+  void clearNodes() {
+    nodes.clear();
+  }
 
   boolean linkNodes(Node n1, Node n2) {
     if(nodes.contains(n1) && nodes.contains(n2)) {
