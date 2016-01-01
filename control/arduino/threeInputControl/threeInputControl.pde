@@ -10,9 +10,11 @@ int numInputs = 6;
 
 //Graph display variables
 int padding=30;
-boolean inputFlag = false;
+boolean error = false;
+int missingOutput = 0;
 DirectedGraph g = new DirectedGraph();
 ArrayList<XposerNode> xposernodes = new ArrayList<XposerNode>();
+ArrayList<Node> nodes = new ArrayList<Node>();
 
 
 //Flow Pump variables
@@ -199,19 +201,21 @@ void setup() {
 
 void draw() {
   background(0xffaaaaaa);
+  textSize(20);
   fill(245);
   noStroke();
   rect(0 , 20, width, height-40);
   if (cp5.getTab("default").isActive()) guiDefault();
   if (cp5.getTab("settings").isActive()) guiSettings();
   if (cp5.getTab("inputs").isActive()) guiInputs();
+  if (error) errorMessage();
 }
 
 void guiDefault() {  
   fill(0); 
   dispenseVolume = int(cp5.get(Textfield.class,"controlVolume").getText().trim());   
-  text("Flow Pumps:", 20, 1*(height/8));
-  text("Control Pumps:", 20, 2*(height/8)); 
+  text("Flow Pumps:", 20, 1*(height/8)- textBoxHeight/2);
+  text("Control Pumps:", 20, 2*(height/8)- textBoxHeight/2); 
   text("Flow Routing:", 20 , 3*(height/8));
   for (int j = 0; j < numInputs; j++){
     text(j, 25, 3*(height/8) + (textBoxHeight*2) * (j+1));
@@ -234,10 +238,38 @@ void numInputsBtn(){
       cp5.get(Textfield.class, "Output"+i).setVisible(false);
     }
   }
-  //g.setFlowAlgorithm(new ForceDirectedFlowAlgorithm());
   xposernodes.clear();
+  nodes.clear();
   g.clearNodes();
+  populateNodes();
   makeGraph();
+}
+
+void route(){
+  IntList destLevel = new IntList();
+  //int[] destLevel = new int[numInputs];
+
+  xposernodes.clear();
+  nodes.clear();
+  g.clearNodes();
+  populateNodes();
+  for (int j=0; j<numInputs; j++){
+    destLevel.append(int(cp5.get(Textfield.class, "Output"+j).getText().trim()));
+  }
+  for (int j=0; j<numInputs; j++){
+    if (!destLevel.hasValue(j)){
+      missingOutput = j;
+      error = true;
+      break;
+    }
+    error = false;
+  }
+  println(destLevel);
+}
+
+void errorMessage(){
+  fill(#F57676);
+  text("Missing Output Value " + missingOutput, 50, 260);
 }
 
 void startFlow() {
@@ -487,13 +519,12 @@ void setFlowHardware(int temp_pwmSpeed) {
   pwmSpeed = ((temp_pwmSpeed >= 0) && (temp_pwmSpeed <= 255))  ? temp_pwmSpeed : pwmSpeed; // Only update if input is a positive number
 }
 
-void makeGraph()
-{
-  float i2 = numInputs/2.0;
+void populateNodes() {
+  //float i2 = numInputs/2.0;
   //int numNodes = (2+ceil(i2)) + (2+floor(i2)) + (int(sq(numInputs))-4);
   //int nodesPerLevel;
   int count=0;
-  ArrayList<Node> nodes = new ArrayList<Node>();
+
 
 //Populate xposer nodes
   //Determine number of nodes per level
@@ -502,31 +533,31 @@ void makeGraph()
     for (int i=0; i<numInputs+2; i++){
       //First check for source and terminal node
       if (i == 0) { 
-	xposernodes.add(new XposerNode("S"+j, j, i));
+  xposernodes.add(new XposerNode("S"+j, j, i));
       }
       else if (i == (numInputs+2) - 1) { 
-	xposernodes.add(new XposerNode("T"+j, j, i));
+  xposernodes.add(new XposerNode("T"+j, j, i));
       }
       else {
-	//Then check for odd stage on level 0
-	if (j == 0 && i%2 == 1){
-	  xposernodes.add(new XposerNode("D" + count, j, i));
-	  count++;
-	}
-	//Then check for odd stage on level n-1 if n is even
-	else if (j == numInputs - 1 && numInputs%2 == 0 && i%2 == 1){
-	  xposernodes.add(new XposerNode("D" + count, j, i));
-	  count++;
-	}
-	//Then check for even stage on level n-1 if n is odd
-	else if (j == numInputs - 1 && numInputs%2 == 1 && i%2 == 0){
-	  xposernodes.add(new XposerNode("D" + count, j, i));
-	  count++;
-	}
-	else if (j != 0 && j != numInputs - 1){
-	  xposernodes.add(new XposerNode("D" + count, j, i));
-	  count++;
-	}	  
+  //Then check for odd stage on level 0
+  if (j == 0 && i%2 == 1){
+    xposernodes.add(new XposerNode("D" + count, j, i));
+    count++;
+  }
+  //Then check for odd stage on level n-1 if n is even
+  else if (j == numInputs - 1 && numInputs%2 == 0 && i%2 == 1){
+    xposernodes.add(new XposerNode("D" + count, j, i));
+    count++;
+  }
+  //Then check for even stage on level n-1 if n is odd
+  else if (j == numInputs - 1 && numInputs%2 == 1 && i%2 == 0){
+    xposernodes.add(new XposerNode("D" + count, j, i));
+    count++;
+  }
+  else if (j != 0 && j != numInputs - 1){
+    xposernodes.add(new XposerNode("D" + count, j, i));
+    count++;
+  }    
       } 
     }
   }
@@ -545,7 +576,10 @@ void makeGraph()
     Node addnode = nodes.get(j);
     g.addNode(addnode);
   }
-
+  }
+  
+void makeGraph()
+{
   // link nodes horizontally
   for (int j=0; j<xposernodes.size(); j++){
     XposerNode currentNode = xposernodes.get(j);
@@ -621,8 +655,8 @@ int findNextIndex(int level, int _stage) {
       index = i;
       break;
     }
-    else if (xposernodes.get(i).level == level && xposernodes.get(i+1).stage == stage+1) {
-      index = i+1;
+    else if (xposernodes.get(i).level == level && xposernodes.get(i).stage == stage+1) {
+      index = i;
       break;
     }
   }
