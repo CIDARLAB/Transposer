@@ -9,7 +9,6 @@ int numControlPumps;
 int numInputs = 6;
 
 //Graph display variables
-int padding=30;
 boolean error = false;
 int missingOutput = 0;
 DirectedGraph g = new DirectedGraph();
@@ -214,11 +213,11 @@ void draw() {
 void guiDefault() {  
   fill(0); 
   dispenseVolume = int(cp5.get(Textfield.class,"controlVolume").getText().trim());   
-  text("Flow Pumps:", 20, 1*(height/8)- textBoxHeight/2);
-  text("Control Pumps:", 20, 2*(height/8)- textBoxHeight/2); 
+  text("Flow Pumps:", 20, 1*(height/8) - textBoxHeight/2);
+  text("Control Pumps:", 20, 2*(height/8) - textBoxHeight/2); 
   text("Flow Routing:", 20 , 3*(height/8));
   for (int j = 0; j < numInputs; j++){
-    text(j, 25, 3*(height/8) + (textBoxHeight*2) * (j+1));
+    text(j, 25, 3*(height/8) + 7 + (textBoxHeight*2) * (j+1));
   }
   g.draw();
 }
@@ -247,7 +246,6 @@ void numInputsBtn(){
 
 void route(){
   IntList destLevel = new IntList();
-  //int[] destLevel = new int[numInputs];
 
   xposernodes.clear();
   nodes.clear();
@@ -520,13 +518,9 @@ void setFlowHardware(int temp_pwmSpeed) {
 }
 
 void populateNodes() {
-  //float i2 = numInputs/2.0;
-  //int numNodes = (2+ceil(i2)) + (2+floor(i2)) + (int(sq(numInputs))-4);
-  //int nodesPerLevel;
   int count=0;
 
-
-//Populate xposer nodes
+  //Populate xposer nodes
   //Determine number of nodes per level
   for (int j=0; j<numInputs; j++){
     //Populate all nodes in each level
@@ -571,12 +565,11 @@ void populateNodes() {
   }
  
   // add nodes to graph
-  //for (int j = 0; j< nodes.length; j++){
   for (int j=0; j<nodes.size(); j++){
     Node addnode = nodes.get(j);
     g.addNode(addnode);
   }
-  }
+}
   
 void makeGraph()
 {
@@ -647,9 +640,8 @@ int findIndex(int level, int stage) {
   return index;
 }
 
-int findNextIndex(int level, int _stage) {
+int findNextIndex(int level, int stage) {
   int index=0;
-  int stage = _stage;
   for (int i = 1; i < xposernodes.size(); i++){
     if (xposernodes.get(i).level == level && xposernodes.get(i).stage == stage) {
       index = i;
