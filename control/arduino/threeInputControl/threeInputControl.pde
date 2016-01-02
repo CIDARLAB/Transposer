@@ -96,8 +96,8 @@ void setup() {
      .setWidth(width/3)
      ;  
      
-  cp5.addTab("inputs")
-     .setLabel(" Inputs ")
+  cp5.addTab("graph")
+     .setLabel(" Graph ")
      .setColorLabel(0xff000000)
      .setColorActive(0xffaaaaaa)
      .setWidth(width/3)
@@ -176,24 +176,24 @@ void setup() {
   }
 
     cp5.addTextfield("numInputsTxt")
-     .setPosition(width/2-50, height/2)
+     .setPosition(width-buttonWidth*1.5-25-50, height/8)
      .setSize(25,textBoxHeight)
      .setFont(font)
      .setColor(color(50,50,50))
      .setColorCursor(color(0,0,0))
      .setLabel("Number of Inputs")
      .setText(str(numInputs))
-     .setTab("inputs")
+     //.setTab("inputs")
      ;     
 
     cp5.addButton("numInputsBtn")
-     .setPosition(width/2+50, height/2)
+     .setPosition(width-buttonWidth-50, height/8)
      .setSize(buttonWidth,buttonHeight)
      .setLabel(" Enter ")
      .setColorBackground(0xff00ff00 + 0x88000000)
      .setColorForeground(0xff00ff00)
      .setOff()
-     .setTab("inputs")
+     //.setTab("inputs")
      ;
 }
 
@@ -205,7 +205,7 @@ void draw() {
   rect(0 , 20, width, height-40);
   if (cp5.getTab("default").isActive()) guiDefault();
   if (cp5.getTab("settings").isActive()) guiSettings();
-  if (cp5.getTab("inputs").isActive()) guiInputs();
+  if (cp5.getTab("graph").isActive()) guiGraph();
   if (error) errorMessage();
 }
 
@@ -218,7 +218,6 @@ void guiDefault() {
   for (int j = 0; j < numInputs; j++){
     text(j, 25, 3*(height/8) + 7 + (textBoxHeight*2) * (j+1));
   }
-  g.draw();
 }
 
 void actuate() {
@@ -299,8 +298,10 @@ void shutDown(String message) {
   noLoop();
 }
 
-void guiInputs() {
+void guiGraph() {
   fill(0);
+  textSize(10);
+  g.draw();
 } 
 
 void guiSettings() {

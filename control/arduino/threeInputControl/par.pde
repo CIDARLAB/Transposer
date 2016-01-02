@@ -39,12 +39,17 @@ void populateNodes() {
     }
   }
 
-  float canvasWidthIncrements_fl = (width - (margin))/(2.0+numInputs);
-  int canvasWidthIncrements = ceil(canvasWidthIncrements_fl);
+  float totalWidth = width - 50;
+  float totalHeight = height - 50;
+  float canvasWidthIncrements_fl = (totalWidth)/(2.0+numInputs);
+  int canvasWidthIncrements = round(canvasWidthIncrements_fl);
+  float canvasHeightIncrements_fl = (totalHeight)/(numInputs);
+  int canvasHeightIncrements = floor(canvasHeightIncrements_fl);
+
 
   //Give xposer nodes a position
   for(XposerNode currentNode: xposernodes) {
-    nodes.add(new Node(currentNode.label, (margin) + (currentNode.stage * canvasWidthIncrements), 3*(height/8) + (textBoxHeight*2) * (currentNode.level+1))); 
+    nodes.add(new Node(currentNode.label, 25+(currentNode.stage * canvasWidthIncrements), (canvasHeightIncrements * (currentNode.level+1)))); 
   }
  
   // add nodes to graph
