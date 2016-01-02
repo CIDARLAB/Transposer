@@ -6,7 +6,7 @@ Serial myPort;
 
 //Topology Variables
 int numControlPumps;
-int numInputs = 6;
+int numInputs = 10;
 
 //Graph display variables
 boolean error = false;
@@ -65,7 +65,6 @@ void setup() {
   textFont(font);
   ControlFont cfont = new ControlFont(font,241);
   numControlPumps = numXposers(numInputs);
-  println(numControlPumps);
   controlPumps = new Pump[numControlPumps];
   flowPumps = new PumpFlow[numInputs];
 
@@ -232,11 +231,12 @@ void numInputsBtn(){
   for (int j = 0; j < numInputs; j++){
    cp5.get(Textfield.class, "Output"+j).setVisible(true);
   }
-  if (numInputs < 6) {
-    for (int i = numInputs; i < 6; i++){
+  if (numInputs < 10) {
+    for (int i = numInputs; i < 10; i++){
       cp5.get(Textfield.class, "Output"+i).setVisible(false);
     }
   }
+  println(numInputs);
   xposernodes.clear();
   nodes.clear();
   g.clearNodes();
