@@ -10,10 +10,10 @@ void populateNodes() {
     for (int i=0; i<numInputs+2; i++){
       //First check for source and terminal node
       if (i == 0) { 
-  xposernodes.add(new XposerNode("S"+j, j, i));
+	xposernodes.add(new XposerNode("S"+j, j, i));
       }
       else if (i == (numInputs+2) - 1) { 
-  xposernodes.add(new XposerNode("T"+j, j, i));
+	xposernodes.add(new XposerNode("T"+j, j, i));
       }
       else {
   //Then check for odd stage on level 0
@@ -146,4 +146,30 @@ int findNextIndex(int level, int stage) {
 int numXposers(int n) {
   if (n == 1) return 0;
   return n-1+numXposers(n-1);
+}
+
+void route(){
+  destLevel.clear();
+  xposernodes.clear();
+  nodes.clear();
+  g.clearNodes();
+  //for (int j=0; j<numInputs; j++){
+    //destLevel.append(int(cp5.get(Textfield.class, "Output"+j).getText().trim()));
+  //}
+  for (String str : inputList){
+    String[] list = split(str, " ");
+    destLevel.append(int(list[1]));
+  }
+  for (int j=0; j<numInputs; j++){
+    if (!destLevel.hasValue(j)){
+      missingOutput = j;
+      error = true;
+      break;
+    }
+    error = false;
+  }
+  if (!error){
+    populateNodes();
+  }
+  println(destLevel);
 }

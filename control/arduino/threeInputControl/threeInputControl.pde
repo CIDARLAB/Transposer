@@ -8,6 +8,11 @@ Serial myPort;
 //Topology Variables
 int numControlPumps;
 int numInputs = 10;
+List<String> inputList = new ArrayList<String>();
+
+//Routing Variables
+int dropdownIndex = 0;
+IntList destLevel = new IntList();
 
 //Graph display variables
 boolean error = false;
@@ -122,7 +127,13 @@ void setup() {
      .setLabel("Air Displacement (uL)")
      .setColorCaptionLabel(#FFFFFF)
      ;   
-   
+  cp5.getController("controlVolume")
+     .getCaptionLabel()
+     .setFont(font)
+     .setSize(12)
+     ;
+
+ 
   drawFlowSettings("settings", 100, 100);
   drawControlSettings("settings", 100, 210);
 
@@ -130,6 +141,18 @@ void setup() {
      .setPosition(margin, height/16+buttonHeight)
      .setSize(buttonWidth,buttonHeight)
      .setLabel(" Start Flow ")
+     .setColorBackground(0xff00ff00 + 0x88000000)
+     .setColorForeground(0xff00ff00)
+     .setOff()
+     .getCaptionLabel()
+     .setFont(font)
+     .setSize(15)
+     ;
+
+  cp5.addButton("setOutput")
+     .setPosition(margin+1.5*buttonWidth,7*(height/16)+buttonHeight)
+     .setSize(buttonWidth,buttonHeight)
+     .setLabel(" Set Output ")
      .setColorBackground(0xff00ff00 + 0x88000000)
      .setColorForeground(0xff00ff00)
      .setOff()
@@ -174,19 +197,34 @@ void setup() {
      .setSize(15)
      ;
 
-  for (int j = 0; j < numInputs; j++){
-   cp5.addTextfield("Output" + j)
-     .setPosition(width-margin, (3*(height/8)-(textBoxHeight/2)) + (textBoxHeight*2) * (j+1))
-     .setSize(25,textBoxHeight)
+  cp5.addTextfield("output")
+     .setPosition(margin, 7*(height/16)+buttonHeight)
+     .setSize(textBoxWidth,textBoxHeight)
      .setFont(font)
      .setColor(color(50,50,50))
      .setColorCursor(color(0,0,0))
-     .setText(str(j))
-     .setLabel("Output "+ j)
+     .setLabel("Select from dropdown menu")
      .setVisible(true)
-     .setId(j)
-     ;   
-  }
+     ;  
+  cp5.getController("output")
+     .getCaptionLabel()
+     .setFont(font)
+     .setSize(12)
+     ;
+
+  //for (int j = 0; j < numInputs; j++){
+   //cp5.addTextfield("Output" + j)
+     //.setPosition(width-margin, (3*(height/8)-(textBoxHeight/2)) + (textBoxHeight*2) * (j+1))
+     //.setSize(25,textBoxHeight)
+     //.setFont(font)
+     //.setColor(color(50,50,50))
+     //.setColorCursor(color(0,0,0))
+     //.setText(str(j))
+     //.setLabel("Output "+ j)
+     //.setVisible(true)
+     //.setId(j)
+     //;   
+  //}
 
     cp5.addTextfield("numInputsTxt")
      .setPosition(margin+buttonWidth*1.5, height/16+buttonHeight)
@@ -218,27 +256,35 @@ void setup() {
      .setSize(15)
      ;
 
-  List l = Arrays.asList("a", "b", "c", "d", "e", "f", "g", "h");
+
+
+  for (int i=0; i<numInputs; i++){
+    inputList.add(i + ": " + i);
+  }
+
+  //List l = Arrays.asList("a", "b", "c", "d", "e", "f", "g", "h");
   /* add a ScrollableList, by default it behaves like a DropdownList */
   cp5.addScrollableList("dropdown")
      .setPosition(20+width/2, height/16)
-     .setSize(width/2-40, height)
+     .setSize(width/2-40, height-40)
      .setBarHeight(buttonHeight)
      .setItemHeight(buttonHeight)
-     .addItems(l)
+     .addItems(inputList)
      .setLabel("Routing: Input - Output")
-     .setColorBackground(0x00000000)
+     .setColorBackground(#00ffff + 0x88000000)
      //.getCaptionLabel()
      //.setFont(font)
      //.setSize(15)
+     .setType(ScrollableList.DROPDOWN)
+     .setOpen(true) 
      .getValueLabel()
-     .setColor(#FFFFFF)
+     .setColor(0)
      .setFont(font)
      .setSize(15)
      ;
   cp5.getController("dropdown")
      .getCaptionLabel()
-     .setColor(#FFFFFF)
+     .setColor(#FF0000)
      .setFont(font)
      .setSize(15)
      ; 
@@ -253,7 +299,7 @@ void draw() {
   if (cp5.getTab("default").isActive()) guiDefault();
   if (cp5.getTab("settings").isActive()) guiSettings();
   if (cp5.getTab("graph").isActive()) guiGraph();
-  if (error) errorMessage();
+  if (error == true && cp5.getTab("default").isActive() == true) errorMessage();
 }
 
 void guiDefault() {  
@@ -262,10 +308,14 @@ void guiDefault() {
   fill(#0000ff + 0x88000000);
   rect(20, height/16, width/2-40, height/8, 10);
   fill(#ff0000 + 0x88000000);
-  rect(20, height/4, width/2-40, height/8, 10);
+  rect(20, 4*height/16, width/2-40, height/8, 10);
+  fill(#ffff00 + 0x88000000);
+  rect(20, 7*height/16, width/2-40, height/8, 10);
   fill(0);
   text("Flow", 20, height/16-5);
-  text("Control", 20, height/4-5);
+  text("Control", 20, 4*height/16-5);
+  text("Routing", 20, 7*height/16-5);
+  cp5.get(ScrollableList.class, "dropdown").open();
   //text("Flow Pumps:", 20, 1*(height/8) - textBoxHeight/2);
   //text("Control Pumps:", 20, 2*(height/8) - textBoxHeight/2); 
   //text("Flow Routing:", 20 , 3*(height/8));
@@ -281,8 +331,15 @@ void actuate() {
 void numInputsBtn(){
   controlPumps.clear();
   flowPumps.clear();
+  inputList.clear();
   numInputs = int(cp5.get(Textfield.class, "numInputsTxt").getText().trim());
   numControlPumps = 2 * numXposers(numInputs);
+
+  for (int i=0; i<numInputs; i++){
+    inputList.add(i + ": " + i);
+  }
+
+  cp5.get(ScrollableList.class, "dropdown").setItems(inputList);
 
   //Create Pump Objects
   for (int j = 0; j < numControlPumps; j++){
@@ -310,30 +367,10 @@ void numInputsBtn(){
   makeGraph();
 }
 
-void route(){
-  IntList destLevel = new IntList();
-
-  xposernodes.clear();
-  nodes.clear();
-  g.clearNodes();
-  populateNodes();
-  for (int j=0; j<numInputs; j++){
-    destLevel.append(int(cp5.get(Textfield.class, "Output"+j).getText().trim()));
-  }
-  for (int j=0; j<numInputs; j++){
-    if (!destLevel.hasValue(j)){
-      missingOutput = j;
-      error = true;
-      break;
-    }
-    error = false;
-  }
-  println(destLevel);
-}
-
 void errorMessage(){
   fill(#F57676);
-  text("Missing Output Value " + missingOutput, 50, 260);
+  textSize(20);
+  text("Missing Output Value " + missingOutput, 50, 10*height/16);
 }
 
 void startFlow() {
@@ -590,7 +627,7 @@ void setFlowHardware(int temp_pwmSpeed) {
 
 void dropdown(int n) {
   /* request the selected item based on index n */
-  println(n, cp5.get(ScrollableList.class, "dropdown").getItem(n));
+  //println(n, cp5.get(ScrollableList.class, "dropdown").getItem(n));
   
   /* here an item is stored as a Map  with the following key-value pairs:
    * name, the given name of the item
@@ -599,9 +636,22 @@ void dropdown(int n) {
    * color, the given color of the item, how to change, see below
    * view, a customizable view, is of type CDrawable 
    */
-  
-   CColor c = new CColor();
-  c.setBackground(color(255,0,0));
-  cp5.get(ScrollableList.class, "dropdown").getItem(n).put("color", c);
-  
+    cp5.getController("output")
+     .setLabel("Output Number " + n)
+     ;
+    cp5.getController("output")
+     .getCaptionLabel()
+     .setFont(font)
+     .setSize(12)
+     ;
+  dropdownIndex = n;
+ 
+   //CColor c = new CColor();
+  //c.setBackground(color(255,0,0));
+  //cp5.get(ScrollableList.class, "dropdown").getItem(n).put("color", c);
+}
+
+void setOutput() {
+  inputList.set(dropdownIndex, dropdownIndex + ": " + int(cp5.get(Textfield.class,"output").getText().trim()));
+  cp5.get(ScrollableList.class, "dropdown").setItems(inputList);
 }
