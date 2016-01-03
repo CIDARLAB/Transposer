@@ -172,4 +172,65 @@ void route(){
     populateNodes();
   }
   println(destLevel);
+  routingAlgorithm();
+}
+
+void routingAlgorithm() {
+  IntList currentLevel = new IntList();
+  IntList levelDifference = new IntList();
+  //Initialize currentLevel with stage 0 values
+  for (int i=0; i<numInputs; i++){
+    currentLevel.append(i);
+    levelDifference.append(0);
+  }
+  println(currentLevel);
+
+  //j = level; i = stage
+  for (int i=0; i<numInputs+2; i++){
+    for (int k=0; k<numInputs; k++){
+      levelDifference.set(k, abs(destLevel.get(k)-currentLevel.get(k)));
+    } 
+    Node linknode1;
+    Node linknode2;
+   //Populate all nodes in each level
+    for (int j=0; j<numInputs; j++){
+      //First check for source and terminal node
+      if (i == 0 && xposernodes.get(findIndex(j,i)).marked == false) {
+	linknode1 = nodes.get(findIndex(j,i)); 
+	linknode2 = nodes.get(findNextIndex(j, i+1));
+	g.linkNodes(linknode1, linknode2); 
+	xposernodes.get(findIndex(j,i)).markNode();
+      }
+      else {
+	//Then check for odd stage on level 0
+	if (j == 0){
+	  if (findIndex(j,i)!=0){
+	    //linknode1 = nodes.get(findIndex(j,i));
+	    //linknode2 = nodes.get(findNextIndex(j+1, i+1));
+	    //g.linkNodes(linknode1, linknode2); 
+	  }
+	}
+	//Then check for odd stage on level n-1 if n is even
+	else if (j == numInputs - 1){
+	  if (findIndex(j,i)!=0){
+	    //linknode1 = nodes.get(findIndex(j,i));
+	    //linknode2 = nodes.get(findNextIndex(j-1, i+1));
+	    //g.linkNodes(linknode1, linknode2); 
+	  }
+	}
+	//Then check for even stage on level n-1 if n is odd
+	else if (j%2 == 0){
+	  //linknode1 = nodes.get(findIndex(j,i));
+	  //linknode2 = nodes.get(findNextIndex(j+t, i+1));
+	  //g.linkNodes(linknode1, linknode2); 
+	}
+	else if (j%2 == 1){
+	  //linknode1 = nodes.get(findIndex(j,i));
+	  //linknode2 = nodes.get(findNextIndex(j-t, i+1));
+	  //g.linkNodes(linknode1, linknode2); 
+	}	  
+      } 
+    }
+  }
+  println(levelDifference);
 }
