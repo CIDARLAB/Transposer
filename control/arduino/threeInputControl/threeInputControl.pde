@@ -1,5 +1,6 @@
 import processing.serial.*;
 import controlP5.*;
+import java.util.*;
 
 ControlP5 cp5;
 Serial myPort; 
@@ -39,8 +40,10 @@ int uStepsMove; // uL * uSteps/uL
 int dispenseVolume;
 
 //Create arrays of control and flow pumps
-Pump[] controlPumps; 
-PumpFlow[] flowPumps = new PumpFlow[numInputs];
+ArrayList<Pump> controlPumps = new ArrayList<Pump>();
+//Pump[] controlPumps; 
+ArrayList<PumpFlow> flowPumps = new ArrayList<PumpFlow>();
+//PumpFlow[] flowPumps = new PumpFlow[numInputs];
 
 //Constants
 boolean PUSH = true;
@@ -50,7 +53,7 @@ boolean PULL = false;
 boolean initControl = false;
 
 //Display Variables
-int margin = 100;
+int margin = 50;
 int textBoxWidth = 100;
 int textBoxHeight = 35;
 int buttonHeight = 35;
@@ -64,21 +67,18 @@ void setup() {
   font = createFont("AndaleMono-48.vlw",15, false);
   textFont(font);
   ControlFont cfont = new ControlFont(font,241);
-  numControlPumps = numXposers(numInputs);
-  controlPumps = new Pump[numControlPumps];
-  flowPumps = new PumpFlow[numInputs];
 
   //Setup Serial Connection
   println(Serial.list());
-  //myPort = new Serial(this, Serial.list()[7], 9600); // Open the port you are using at the rate you want:
+  //myPort = new Serial(this, Serial.list()[2], 9600); // Open the port you are using at the rate you want:
   
+  numControlPumps = 2 * numXposers(numInputs);
 
-  //Create Pump Objects
-  for (int j = 0; j < controlPumps.length; j++){
-    controlPumps[j] = new Pump(myPort, j); 
+  for (int j = 0; j < numControlPumps; j++){
+    controlPumps.add(new Pump(myPort, j)); 
   }
-  for (int i = 0; i < flowPumps.length; i++){
-    flowPumps[i] = new PumpFlow(myPort, i); 
+  for (int i = 0; i < numInputs; i++){
+    flowPumps.add(new PumpFlow(myPort, i)); 
   }
   updateSettings();
     
@@ -113,55 +113,68 @@ void setup() {
      ;
 
    cp5.addTextfield("controlVolume")
-     .setPosition(margin+6*buttonWidth,2*(height/8))
+     .setPosition(margin+3*buttonWidth,(height/4)+buttonHeight)
      .setSize(textBoxWidth,textBoxHeight)
      .setFont(font)
      .setColor(color(50,50,50))
      .setColorCursor(color(0,0,0))
      .setText("4000")
      .setLabel("Air Displacement (uL)")
+     .setColorCaptionLabel(#FFFFFF)
      ;   
    
   drawFlowSettings("settings", 100, 100);
   drawControlSettings("settings", 100, 210);
 
   cp5.addButton("startFlow")
-     .setPosition(margin, 1*(height/8))
+     .setPosition(margin, height/16+buttonHeight)
      .setSize(buttonWidth,buttonHeight)
      .setLabel(" Start Flow ")
      .setColorBackground(0xff00ff00 + 0x88000000)
      .setColorForeground(0xff00ff00)
      .setOff()
+     .getCaptionLabel()
+     .setFont(font)
+     .setSize(15)
      ;
 
   cp5.addButton("actuate")
-     .setPosition(margin+2*buttonWidth,2*(height/8))
+     .setPosition(margin+1.5*buttonWidth,(height/4)+buttonHeight)
      .setSize(buttonWidth,buttonHeight)
-     .setLabel(" Actuate Control ")
+     .setLabel(" Actuate ")
      .setColorBackground(0xff00ff00 + 0x88000000)
      .setColorForeground(0xff00ff00)
      .setOff()
+     .getCaptionLabel()
+     .setFont(font)
+     .setSize(15)
      ;
 
   cp5.addButton("route")
-     .setPosition(margin,2*(height/8))
+     .setPosition(margin,(height/4)+buttonHeight)
      .setSize(buttonWidth,buttonHeight)
      .setLabel("Route")
      .setColorBackground(0xff00ff00 + 0x88000000)
      .setColorForeground(0xff00ff00)
      .setOff()
+     .getCaptionLabel()
+     .setFont(font)
+     .setSize(15)
      ;
 
   cp5.addButton("return")
-     .setPosition(margin+4*buttonWidth,2*(height/8))
+     .setPosition(margin+4.5*buttonWidth,(height/4)+buttonHeight)
      .setSize(buttonWidth,buttonHeight)
-     .setLabel(" Return to Origin")
+     .setLabel(" Return ")
      .setColorBackground(0xff00ff00 + 0x88000000)
      .setColorForeground(0xff00ff00)
      .setOff()
+     .getCaptionLabel()
+     .setFont(font)
+     .setSize(15)
      ;
 
-  for (int j = 0; j < flowPumps.length; j++){
+  for (int j = 0; j < numInputs; j++){
    cp5.addTextfield("Output" + j)
      .setPosition(width-margin, (3*(height/8)-(textBoxHeight/2)) + (textBoxHeight*2) * (j+1))
      .setSize(25,textBoxHeight)
@@ -176,25 +189,59 @@ void setup() {
   }
 
     cp5.addTextfield("numInputsTxt")
-     .setPosition(width-buttonWidth*1.5-25-50, height/8)
+     .setPosition(margin+buttonWidth*1.5, height/16+buttonHeight)
      .setSize(25,textBoxHeight)
      .setFont(font)
      .setColor(color(50,50,50))
      .setColorCursor(color(0,0,0))
      .setLabel("Number of Inputs")
      .setText(str(numInputs))
+     .setColorCaptionLabel(#FFFFFF)
      //.setTab("inputs")
      ;     
+  cp5.getController("numInputsTxt")
+     .getCaptionLabel()
+     .setFont(font)
+     .setSize(12)
+     ;
 
     cp5.addButton("numInputsBtn")
-     .setPosition(width-buttonWidth-50, height/8)
+     .setPosition(margin+buttonWidth*2, height/16+buttonHeight)
      .setSize(buttonWidth,buttonHeight)
      .setLabel(" Enter ")
      .setColorBackground(0xff00ff00 + 0x88000000)
      .setColorForeground(0xff00ff00)
      .setOff()
      //.setTab("inputs")
+     .getCaptionLabel()
+     .setFont(font)
+     .setSize(15)
      ;
+
+  List l = Arrays.asList("a", "b", "c", "d", "e", "f", "g", "h");
+  /* add a ScrollableList, by default it behaves like a DropdownList */
+  cp5.addScrollableList("dropdown")
+     .setPosition(20+width/2, height/16)
+     .setSize(width/2-40, height)
+     .setBarHeight(buttonHeight)
+     .setItemHeight(buttonHeight)
+     .addItems(l)
+     .setLabel("Routing: Input - Output")
+     .setColorBackground(0x00000000)
+     //.getCaptionLabel()
+     //.setFont(font)
+     //.setSize(15)
+     .getValueLabel()
+     .setColor(#FFFFFF)
+     .setFont(font)
+     .setSize(15)
+     ;
+  cp5.getController("dropdown")
+     .getCaptionLabel()
+     .setColor(#FFFFFF)
+     .setFont(font)
+     .setSize(15)
+     ; 
 }
 
 void draw() {
@@ -212,12 +259,19 @@ void draw() {
 void guiDefault() {  
   fill(0); 
   dispenseVolume = int(cp5.get(Textfield.class,"controlVolume").getText().trim());   
-  text("Flow Pumps:", 20, 1*(height/8) - textBoxHeight/2);
-  text("Control Pumps:", 20, 2*(height/8) - textBoxHeight/2); 
-  text("Flow Routing:", 20 , 3*(height/8));
-  for (int j = 0; j < numInputs; j++){
-    text(j, 25, 3*(height/8) + 7 + (textBoxHeight*2) * (j+1));
-  }
+  fill(#0000ff + 0x88000000);
+  rect(20, height/16, width/2-40, height/8, 10);
+  fill(#ff0000 + 0x88000000);
+  rect(20, height/4, width/2-40, height/8, 10);
+  fill(0);
+  text("Flow", 20, height/16-5);
+  text("Control", 20, height/4-5);
+  //text("Flow Pumps:", 20, 1*(height/8) - textBoxHeight/2);
+  //text("Control Pumps:", 20, 2*(height/8) - textBoxHeight/2); 
+  //text("Flow Routing:", 20 , 3*(height/8));
+  //for (int j = 0; j < numInputs; j++){
+    //text(j, 25, 3*(height/8) + 7 + (textBoxHeight*2) * (j+1));
+  //}
 }
 
 void actuate() {
@@ -225,17 +279,30 @@ void actuate() {
 }
 
 void numInputsBtn(){
+  controlPumps.clear();
+  flowPumps.clear();
   numInputs = int(cp5.get(Textfield.class, "numInputsTxt").getText().trim());
+  numControlPumps = 2 * numXposers(numInputs);
+
+  //Create Pump Objects
+  for (int j = 0; j < numControlPumps; j++){
+    controlPumps.add(new Pump(myPort, j)); 
+  }
+  for (int i = 0; i < numInputs; i++){
+    flowPumps.add(new PumpFlow(myPort, i)); 
+  }
+  updateSettings();
+
   cp5.get(Button.class, "numInputsBtn").setLabel("SAVED!");
-  for (int j = 0; j < numInputs; j++){
-   cp5.get(Textfield.class, "Output"+j).setVisible(true);
-  }
-  if (numInputs < 10) {
-    for (int i = numInputs; i < 10; i++){
-      cp5.get(Textfield.class, "Output"+i).setVisible(false);
-    }
-  }
-  println(numInputs);
+
+  //for (int j = 0; j < numInputs; j++){
+   //cp5.get(Textfield.class, "Output"+j).setVisible(true);
+  //}
+  //if (numInputs < 10) {
+    //for (int i = numInputs; i < 10; i++){
+      //cp5.get(Textfield.class, "Output"+i).setVisible(false);
+    //}
+  //}
   xposernodes.clear();
   nodes.clear();
   g.clearNodes();
@@ -275,15 +342,18 @@ void startFlow() {
        .setColorBackground(0xffff0000 + 0x88000000)
        .setColorForeground(0xffff0000);
     for (int j = 0; j < numInputs; j++){
-      flowPumps[j].dispenseFlow(pwmSpeed);
+      println(flowPumps.get(j).motorPort);
+      //PumpFlow disp = flowPumps.get(j);
+      //pump.dispenseFlow(pwmSpeed);
     }
   }
   else {
     cp5.get(Button.class,"startFlow").setLabel(" Start Flow")
        .setColorBackground(0xff00ff00 + 0x88000000)
        .setColorForeground(0xff00ff00);
-    for (int j = 0; j < numInputs; j++){
-      flowPumps[j].dispenseFlow(0);
+    for (int j = 0; j < flowPumps.size(); j++){
+      println(flowPumps.get(j).motorPort);
+      //flowPumps.get(j).dispenseFlow(0);
     }
   }
 }
@@ -516,4 +586,22 @@ void setHardware(float temp_syringeInnerD, int temp_syringeMaxCap, float temp_pi
 
 void setFlowHardware(int temp_pwmSpeed) { 
   pwmSpeed = ((temp_pwmSpeed >= 0) && (temp_pwmSpeed <= 255))  ? temp_pwmSpeed : pwmSpeed; // Only update if input is a positive number
+}
+
+void dropdown(int n) {
+  /* request the selected item based on index n */
+  println(n, cp5.get(ScrollableList.class, "dropdown").getItem(n));
+  
+  /* here an item is stored as a Map  with the following key-value pairs:
+   * name, the given name of the item
+   * text, the given text of the item by default the same as name
+   * value, the given value of the item, can be changed by using .getItem(n).put("value", "abc"); a value here is of type Object therefore can be anything
+   * color, the given color of the item, how to change, see below
+   * view, a customizable view, is of type CDrawable 
+   */
+  
+   CColor c = new CColor();
+  c.setBackground(color(255,0,0));
+  cp5.get(ScrollableList.class, "dropdown").getItem(n).put("color", c);
+  
 }

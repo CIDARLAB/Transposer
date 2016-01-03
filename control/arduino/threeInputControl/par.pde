@@ -49,7 +49,7 @@ void populateNodes() {
 
   //Give xposer nodes a position
   for(XposerNode currentNode: xposernodes) {
-    nodes.add(new Node(currentNode.label, 25+(currentNode.stage * canvasWidthIncrements), (canvasHeightIncrements * (currentNode.level+1)))); 
+    nodes.add(new Node(currentNode.label, 25+(currentNode.stage * canvasWidthIncrements), 25+(canvasHeightIncrements * (currentNode.level+1)))); 
   }
  
   // add nodes to graph
