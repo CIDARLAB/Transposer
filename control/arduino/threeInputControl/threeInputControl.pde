@@ -13,6 +13,7 @@ List<String> inputList = new ArrayList<String>();
 //Routing Variables
 int dropdownIndex = 0;
 IntList destLevel = new IntList();
+IntList currentLevel = new IntList();
 
 //Graph display variables
 boolean error = false;
@@ -75,7 +76,7 @@ void setup() {
 
   //Setup Serial Connection
   println(Serial.list());
-  //myPort = new Serial(this, Serial.list()[2], 9600); // Open the port you are using at the rate you want:
+  //myPort = new Serial(this, Serial.list()[7], 9600); // Open the port you are using at the rate you want:
   
   numControlPumps = 2 * numXposers(numInputs);
 
@@ -379,9 +380,10 @@ void startFlow() {
        .setColorBackground(0xffff0000 + 0x88000000)
        .setColorForeground(0xffff0000);
     for (int j = 0; j < numInputs; j++){
-      println(flowPumps.get(j).motorPort);
+      //println(flowPumps.get(j).motorPort);
       //PumpFlow disp = flowPumps.get(j);
       //pump.dispenseFlow(pwmSpeed);
+      flowPumps.get(j).dispenseFlow(pwmSpeed);
     }
   }
   else {
@@ -389,8 +391,8 @@ void startFlow() {
        .setColorBackground(0xff00ff00 + 0x88000000)
        .setColorForeground(0xff00ff00);
     for (int j = 0; j < flowPumps.size(); j++){
-      println(flowPumps.get(j).motorPort);
-      //flowPumps.get(j).dispenseFlow(0);
+      //println(flowPumps.get(j).motorPort);
+      flowPumps.get(j).dispenseFlow(0);
     }
   }
 }
