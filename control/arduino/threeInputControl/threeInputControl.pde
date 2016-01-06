@@ -77,7 +77,7 @@ void setup() {
 
   //Setup Serial Connection
   println(Serial.list());
-  //myPort = new Serial(this, Serial.list()[7], 9600); // Open the port you are using at the rate you want:
+  myPort = new Serial(this, Serial.list()[7], 9600); // Open the port you are using at the rate you want:
   
   numControlPumps = 2 * numXposers(numInputs);
 
@@ -143,6 +143,30 @@ void setup() {
      .setPosition(margin, height/16+buttonHeight)
      .setSize(buttonWidth,buttonHeight)
      .setLabel(" Start Flow ")
+     .setColorBackground(0xff00ff00 + 0x88000000)
+     .setColorForeground(0xff00ff00)
+     .setOff()
+     .getCaptionLabel()
+     .setFont(font)
+     .setSize(15)
+     ;
+
+  cp5.addButton("randomize")
+     .setPosition(margin+4.5*buttonWidth,7*(height/16)+buttonHeight)
+     .setSize(buttonWidth,buttonHeight)
+     .setLabel(" Random ")
+     .setColorBackground(0xff00ff00 + 0x88000000)
+     .setColorForeground(0xff00ff00)
+     .setOff()
+     .getCaptionLabel()
+     .setFont(font)
+     .setSize(15)
+     ;
+
+  cp5.addButton("fullSwap")
+     .setPosition(margin+3*buttonWidth,7*(height/16)+buttonHeight)
+     .setSize(buttonWidth,buttonHeight)
+     .setLabel(" full Swap ")
      .setColorBackground(0xff00ff00 + 0x88000000)
      .setColorForeground(0xff00ff00)
      .setOff()
@@ -656,5 +680,41 @@ void dropdown(int n) {
 
 void setOutput() {
   inputList.set(dropdownIndex, dropdownIndex + ": " + int(cp5.get(Textfield.class,"output").getText().trim()));
+  cp5.get(ScrollableList.class, "dropdown").setItems(inputList);
+}
+
+void fullSwap() {
+  inputList.clear();
+
+  for (int i=0; i<numInputs; i++){
+    inputList.add(i + ": " + (numInputs-1-i));
+  }
+
+  cp5.get(ScrollableList.class, "dropdown").setItems(inputList);
+}
+
+void randomize() {
+  int[] randomarray =  new int[numInputs];
+  for(int t=0; t<randomarray.length; t++){
+    randomarray[t]=t;
+  }
+  
+  for (int k=0; k < numInputs; k++) {
+    int temp = randomarray[k]; 
+    // make rnd index x
+    int x = (int)random(0, randomarray.length);    
+    // overwrite value at current pos k with value at rnd index x
+    randomarray[k]=randomarray[x];
+    // finish swapping by giving the old value at pos k to the 
+    // pos x. 
+    randomarray[x]=temp;
+  }
+
+  inputList.clear();
+
+  for (int i=0; i<numInputs; i++) {
+    inputList.add(i + ": " + randomarray[i]);
+  }
+
   cp5.get(ScrollableList.class, "dropdown").setItems(inputList);
 }

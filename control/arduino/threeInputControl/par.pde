@@ -186,9 +186,6 @@ void route(){
   xposernodes.clear();
   nodes.clear();
   g.clearNodes();
-  //for (int j=0; j<numInputs; j++){
-    //destLevel.append(int(cp5.get(Textfield.class, "Output"+j).getText().trim()));
-  //}
   for (String str : inputList){
     String[] list = split(str, " ");
     destLevel.append(int(list[1]));
@@ -204,7 +201,6 @@ void route(){
   if (!error){
     populateNodes();
   }
-  //println(destLevel);
   routingAlgorithm();
 }
 
@@ -239,11 +235,6 @@ void routingAlgorithm() {
     currentMax = levelDifference.max();
     currentMin = levelDifference.min();
 
-    //Start searching each node by stage
-    //println("levelDifference: " + levelDifference);
-    //println("currentMax: " + currentMax);
-    //println("currentMin: " + currentMin);
-
     while (currentMax != 0 || currentMin != 0) {
       currentMax = levelDifference.max();
       currentMin = levelDifference.min();
@@ -256,15 +247,18 @@ void routingAlgorithm() {
 	incrementLevel = false;
       }
       levelToMove = findCurrentIndex(inputToMove);
-      println("currentMax: " + currentMax);
-      println("currentMin: " + currentMin);
-      println("inputToMove: " + inputToMove);
-      println("calculated inputToMove using currentMin: " + findDiffIndex(currentMin));
-      println("levelDifference: " + levelDifference);
-      println("currentLevel: " + currentLevel);
-      println("nextLevel: " + nextLevel);
-      println("levelToMove: " + levelToMove);
-      println("i: " + i);
+
+      //debugging messages
+      //println("currentMax: " + currentMax);
+      //println("currentMin: " + currentMin);
+      //println("inputToMove: " + inputToMove);
+      //println("calculated inputToMove using currentMin: " + findDiffIndex(currentMin));
+      //println("levelDifference: " + levelDifference);
+      //println("currentLevel: " + currentLevel);
+      //println("nextLevel: " + nextLevel);
+      //println("levelToMove: " + levelToMove);
+      //println("i: " + i);
+      
       //If there is no node at the current maximum levelToMove, we must wait until the next stage to route it
       if (findIndex(levelToMove, i) == -1) {
         levelDifference.set(inputToMove, 0);
@@ -280,7 +274,8 @@ void routingAlgorithm() {
         xposernodes.get(findIndex(levelToMove,i)).markNode();
         xposernodes.get(findIndex(levelToMove+1, i)).markNode();
         levelDifference.set(inputToMove, 0); 
-        levelDifference.set(inputToMove+1, 0); 
+        //levelDifference.set(inputToMove+1, 0); 
+        levelDifference.set(currentLevel.get(levelToMove+1), 0); 
         nextLevel.set(levelToMove, currentLevel.get(levelToMove+1));
         nextLevel.set(levelToMove+1, currentLevel.get(levelToMove));
       }
@@ -295,7 +290,8 @@ void routingAlgorithm() {
         xposernodes.get(findIndex(levelToMove,i)).markNode();
         xposernodes.get(findIndex(levelToMove-1, i)).markNode();
         levelDifference.set(inputToMove, 0); 
-        levelDifference.set(inputToMove-1, 0); 
+        //levelDifference.set(inputToMove-1, 0); 
+        levelDifference.set(currentLevel.get(levelToMove-1), 0); 
         nextLevel.set(levelToMove, currentLevel.get(levelToMove-1));
         nextLevel.set(levelToMove-1, currentLevel.get(levelToMove));
       }
@@ -321,147 +317,7 @@ void routingAlgorithm() {
     }
     //Recalculate levelDifference for next scan line stage
     for (int l=0; l<numInputs; l++){
-      //levelDifference.set(l, destLevel.get(l)-currentLevel.get(l));
       levelDifference.set(l, findDestIndex(l)-findCurrentIndex(l));
     } 
   }
 }
- 
-
-
-    //for (int j=0; j<numInputs; j++){
-      //currentIndex = findIndex(j,i);
-      //if (currentIndex != -1) {
-	//if (xposernodes.get(currentIndex).marked == false) { 
-	  //inputAtNode = currentLevel.get(j);
-	  ////This will find the input with the greatest distance to cover 
-	  ////notice that in the event of a tie it will set the input to move as negative
-	  //while (levelDifference.max() != 0 && levelDifference.min() != 0){
-	    //for (int k=0; k<numInputs; k++){
-	    //if (findIndex(k,i) != -1) {
-	    //println("start");
-   	    //println("levelDiff inside: " + levelDifference);
-	    //println("max levelDiff inside: " + levelDifference.max());
-	    //println("k inside: " + k);
-	    //println("i inside: " + i);
-	    //println("k's levelDiff inside: " + levelDifference.get(k));
-	    //println("numInputs-1:" + (numInputs-1));
-	    //println("abs(leveldiff k)" + abs(levelDifference.get(k)));
-	    //println("last level test" + (k == numInputs-1));
-	    //println("needs to route up test" + (levelDifference.get(k) == levelDifference.min()));
-	    //println("needs to route down test" + (levelDifference.get(k) == levelDifference.max()));
-	    //println("marked test" + (xposernodes.get(findIndex(k,i)).marked == false));
-	    //println("current level" + currentLevel);
-	    //println("end");
-	    ////Check for level 0, always route down
-	      //if (k == 0 && levelDifference.get(k) == currentMax && xposernodes.get(findIndex(k,i)).marked == false) {
-		//linknode1 = nodes.get(findIndex(k,i));
-		//linknode2 = nodes.get(findNextIndex(k+1, i+1));
-		//linknode1f = nodes.get(findIndex(k+1, i));
-		//linknode2f = nodes.get(findNextIndex(k, i+1));
-		//g.linkNodes(linknode1, linknode2); 
-		//g.linkNodes(linknode1f, linknode2f); 
-		//xposernodes.get(findIndex(k,i)).markNode();
-		//xposernodes.get(findIndex(k+1, i)).markNode();
-		//levelDifference.set(k, 0); 
-		//levelDifference.set(k+1, 0); 
-		////currentLevel.set(k, k+1);
-		//nextLevel.set(k, currentLevel.get(k+1));
-		////currentLevel.set(k+1, k);
-		//nextLevel.set(k+1, currentLevel.get(k));
-		//println("first level current level k = " + k + "i = " + i + ": " + currentLevel);
-	      //}
-	      ////Check for level n-1, always route up
-	      //else if (k == numInputs-1 && levelDifference.get(k) == currentMin && xposernodes.get(findIndex(k,i)).marked == false) {
-		//linknode1 = nodes.get(findIndex(k,i));
-		//linknode2 = nodes.get(findNextIndex(k-1, i+1));
-		//linknode1f = nodes.get(findIndex(k-1, i));
-		//linknode2f = nodes.get(findNextIndex(k, i+1));
-		//g.linkNodes(linknode1, linknode2); 
-		//g.linkNodes(linknode1f, linknode2f); 
-		//xposernodes.get(findIndex(k,i)).markNode();
-		//xposernodes.get(findIndex(k-1, i)).markNode();
-		//levelDifference.set(k, 0); 
-		//levelDifference.set(k-1, 0); 
-		//nextLevel.set(k, currentLevel.get(k-1));
-		//nextLevel.set(k-1, currentLevel.get(k));
-		////currentLevel.set(k, k-1);
-		////currentLevel.set(k-1, k);
-		  ////linknode1 = nodes.get(findIndex(j,i));
-		  ////linknode2 = nodes.get(findNextIndex(j-1, i+1));
-		  ////g.linkNodes(linknode1, linknode2); 
-		//println("last level current level k = " + k + "i = " + i + ": " + currentLevel);
-	      //}
-	      ////Then check for even level on an odd stage or odd level on an even stage, route down
-	      //else if (((k%2 == 0 && i%2 == 1) || (k%2 == 1 && i%2 == 0)) && levelDifference.get(k) == currentMax && xposernodes.get(findIndex(k,i)).marked == false ){
-		//linknode1 = nodes.get(findIndex(k,i));
-		//linknode2 = nodes.get(findNextIndex(k+1, i+1));
-		//linknode1f = nodes.get(findIndex(k+1, i));
-		//linknode2f = nodes.get(findNextIndex(k, i+1));
-		//g.linkNodes(linknode1, linknode2); 
-		//g.linkNodes(linknode1f, linknode2f); 
-		//xposernodes.get(findIndex(k,i)).markNode();
-		//xposernodes.get(findIndex(k+1, i)).markNode();
-		//levelDifference.set(k, 0); 
-		//levelDifference.set(k+1, 0); 
-		//nextLevel.set(k, currentLevel.get(k+1));
-		//nextLevel.set(k+1, currentLevel.get(k));
-		////currentLevel.set(k, k+1);
-		////currentLevel.set(k+1, k);
-		////linknode1 = nodes.get(findIndex(j,i));
-		////linknode2 = nodes.get(findNextIndex(j+t, i+1));
-		////g.linkNodes(linknode1, linknode2); 
-		//println("even/odd odd/even current level k = " + k + "i = " + i + ": " + currentLevel);
-	      //}
-	      //else if (((k%2 == 0 && i%2 == 0) || (k%2 == 1 && i%2 == 1)) && levelDifference.get(k) == currentMin && xposernodes.get(findIndex(k,i)).marked == false ){
-		//linknode1 = nodes.get(findIndex(k,i));
-		//linknode2 = nodes.get(findNextIndex(k-1, i+1));
-		//linknode1f = nodes.get(findIndex(k-1, i));
-		//linknode2f = nodes.get(findNextIndex(k, i+1));
-		//g.linkNodes(linknode1, linknode2); 
-		//g.linkNodes(linknode1f, linknode2f); 
-		//xposernodes.get(findIndex(k,i)).markNode();
-		//xposernodes.get(findIndex(k-1, i)).markNode();
-		//levelDifference.set(k, 0); 
-		//levelDifference.set(k-1, 0); 
-		//nextLevel.set(k, currentLevel.get(k-1));
-		//nextLevel.set(k-1, currentLevel.get(k));
-		////currentLevel.set(k, k-1);
-		////currentLevel.set(k-1, k);		//linknode1 = nodes.get(findIndex(j,i));
-		////linknode2 = nodes.get(findNextIndex(j-t, i+1));
-		////g.linkNodes(linknode1, linknode2); 
-		//println("even/even odd/odd current level k = " + k + "i = " + i + ": " + currentLevel);
-	      //}	  
-	      //else {
-		//levelDifference.set(k, 0);
-	      //}
-	    //}
-	    //}
-	  //}
-	  ////levelDifference is now 0 for all levels
-	  ////Route straight through unless you're on a terminal node
-	  //if (i < numInputs+1 && xposernodes.get(findIndex(j,i)).marked == false){
-	    //linknode1 = nodes.get(currentIndex); 
-	    //linknode2 = nodes.get(findNextIndex(j, i+1));
-	    //g.linkNodes(linknode1, linknode2); 
-	    //xposernodes.get(findIndex(j,i)).markNode();
-	    //levelDifference.set(j, 0); 
-	  //}
-	//}
-      //}
-      //else {
-        //levelDifference.set(j,0);
-      //}
-    //}
-    ////recalculate levelDifference for next stage
-    //for (int m=0; m<numInputs; m++){
-      //currentLevel.set(m, nextLevel.get(m));
-    //}
-    //for (int l=0; l<numInputs; l++){
-      ////levelDifference.set(l, destLevel.get(l)-currentLevel.get(l));
-      //levelDifference.set(l, findDestIndex(l)-findCurrentIndex(l));
-    //} 
-    //println("last levelDiff" + levelDifference);
-    //println("last current level" + currentLevel);
-  //} 
-//}
