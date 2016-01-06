@@ -14,6 +14,7 @@ List<String> inputList = new ArrayList<String>();
 int dropdownIndex = 0;
 IntList destLevel = new IntList();
 IntList currentLevel = new IntList();
+IntList levelDifference = new IntList();
 
 //Graph display variables
 boolean error = false;
