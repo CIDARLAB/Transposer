@@ -15,6 +15,7 @@ int dropdownIndex = 0;
 IntList destLevel = new IntList();
 IntList currentLevel = new IntList();
 IntList levelDifference = new IntList();
+boolean greedyFail = false;
 
 //Graph display variables
 boolean error = false;
@@ -77,7 +78,7 @@ void setup() {
 
   //Setup Serial Connection
   println(Serial.list());
-  myPort = new Serial(this, Serial.list()[7], 9600); // Open the port you are using at the rate you want:
+  //myPort = new Serial(this, Serial.list()[7], 9600); // Open the port you are using at the rate you want:
   
   numControlPumps = 2 * numXposers(numInputs);
 
@@ -143,6 +144,18 @@ void setup() {
      .setPosition(margin, height/16+buttonHeight)
      .setSize(buttonWidth,buttonHeight)
      .setLabel(" Start Flow ")
+     .setColorBackground(0xff00ff00 + 0x88000000)
+     .setColorForeground(0xff00ff00)
+     .setOff()
+     .getCaptionLabel()
+     .setFont(font)
+     .setSize(15)
+     ;
+
+  cp5.addButton("test")
+     .setPosition(margin,13*(height/16)+buttonHeight)
+     .setSize(buttonWidth,buttonHeight)
+     .setLabel(" Test n ")
      .setColorBackground(0xff00ff00 + 0x88000000)
      .setColorForeground(0xff00ff00)
      .setOff()
@@ -717,4 +730,24 @@ void randomize() {
   }
 
   cp5.get(ScrollableList.class, "dropdown").setItems(inputList);
+}
+
+void test() {
+  inputList.clear();
+  int[] testArray = new int[numInputs];
+  for (int t=0; t<testArray.length; t++){
+    testArray[t] = t;
+  }
+  testArray = sort(testArray);
+  for (int i=0; i<numInputs; i++) {
+    inputList.add(i + ": " + testArray[i]);
+  }
+  route();
+  inputList.clear();
+  testArray = reverse(testArray);
+  for (int i=0; i<numInputs; i++) {
+    inputList.add(i + ": " + testArray[i]);
+  }
+  route();
+  inputList.clear();
 }
