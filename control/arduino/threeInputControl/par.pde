@@ -59,29 +59,9 @@ void populateNodes() {
   }
 }
 
-void makeGraphXposerNodes()
-{
-  // link nodes horizontally
-  for (int j=0; j<xposernodes.size(); j++){
-    XposerNode currentNode = xposernodes.get(j);
-    Node linknode1 = nodes.get(j);
-    Node linknode2;
-    XposerNode linknode2x;
-    //If stage is 0, we are on a source node. Connect to first decision node
-    if (currentNode.label.contains("S") || currentNode.label.contains("D")){
-      currentNode.linkStraight(xposernodes.get(j+1));
-      linknode2x = currentNode.nextNodeSameLevel;
-      linknode2 = nodes.get(findIndex(linknode2x.level, linknode2x.stage));
-      g.linkNodes(linknode1, linknode2);
-    }
-  }    
-  
-
-  // link nodes vertically
+void makeXposers() {
   for (int j=0; j<numInputs; j++){
     int t = 1;
-    Node linknode1;
-    Node linknode2;
     XposerNode linknode1x;
     XposerNode linknode2x;
    //Populate all nodes in each level
@@ -93,11 +73,9 @@ void makeGraphXposerNodes()
 	  if (findIndex(j,i)!=-1){
 	    linknode1x = xposernodes.get(findIndex(j,i));
 	    linknode1x.pairNode(xposernodes.get(findNextIndex(j+1, i)));
+	    xposers.add(new Xposer(linknode1x));
 	    linknode1x.linkCross(xposernodes.get(findNextIndex(j+1, i+1)));
 	    linknode2x = linknode1x.nextNodeDiffLevel;
-	    linknode1 = nodes.get(findIndex(linknode1x.level,linknode1x.stage));
-	    linknode2 = nodes.get(findNextIndex(linknode2x.level, linknode2x.stage));
-	    g.linkNodes(linknode1, linknode2); 
 	  }
 	}
 	//Then check for odd stage on level n-1 if n is even and decrement the level
@@ -107,9 +85,6 @@ void makeGraphXposerNodes()
 	    linknode1x.pairNode(xposernodes.get(findNextIndex(j-1, i)));
 	    linknode1x.linkCross(xposernodes.get(findNextIndex(j-1, i+1)));
 	    linknode2x = linknode1x.nextNodeDiffLevel;
-	    linknode1 = nodes.get(findIndex(linknode1x.level,linknode1x.stage));
-	    linknode2 = nodes.get(findNextIndex(linknode2x.level, linknode2x.stage));
-	    g.linkNodes(linknode1, linknode2); 
 	  }
 	}
 	//Then check for even stage on level n-1 if n is odd
@@ -117,26 +92,130 @@ void makeGraphXposerNodes()
 	  linknode1x = xposernodes.get(findIndex(j,i));
 	  linknode1x.linkCross(xposernodes.get(findNextIndex(j+t, i+1)));
 	  linknode1x.pairNode(xposernodes.get(findNextIndex(j+t, i)));
-	  //println(linknode1x.label + " is paired with " + linknode1x.pair.label);
+	  if (t == 1){
+	    xposers.add(new Xposer(linknode1x));
+	  }
 	  linknode2x = linknode1x.nextNodeDiffLevel;
-	  linknode1 = nodes.get(findIndex(linknode1x.level,linknode1x.stage));
-	  linknode2 = nodes.get(findNextIndex(linknode2x.level, linknode2x.stage));
 	  t *= -1; 
-	  g.linkNodes(linknode1, linknode2); 
 	}
 	else if (j%2 == 1){
 	  linknode1x = xposernodes.get(findIndex(j,i));
 	  linknode1x.linkCross(xposernodes.get(findNextIndex(j-t, i+1)));
-	  //linknode1x.pairNode(xposernodes.get(findNextIndex(j-t, i)));
+	  linknode1x.pairNode(xposernodes.get(findNextIndex(j-t, i)));
+	  if (t == -1){
+	    xposers.add(new Xposer(linknode1x));
+	  }
 	  linknode2x = linknode1x.nextNodeDiffLevel;
-	  linknode1 = nodes.get(findIndex(linknode1x.level,linknode1x.stage));
-	  linknode2 = nodes.get(findNextIndex(linknode2x.level, linknode2x.stage));
 	  t *= -1; 
-	  g.linkNodes(linknode1, linknode2); 
 	}	  
       } 
     }
   }
+  println("calculated number of xposers " + numXposers(numInputs));
+  println("actual number of xposers " + xposers.size());
+}
+
+void makeXposerGraph(){
+  for (int j=0; j<xposernodes.size(); j++){
+    XposerNode currentNode = xposernodes.get(j);
+    Node linknode1 = nodes.get(j);
+    Node linknode2;
+    XposerNode linknode2x;
+    //If stage is 0, we are on a source node. Connect to first decision node
+    if (currentNode.label.contains("S")){
+      currentNode.linkStraight(xposernodes.get(j+1));
+      linknode2x = currentNode.nextNodeSameLevel;
+      linknode2 = nodes.get(findIndex(linknode2x.level, linknode2x.stage));
+      g.linkNodes(linknode1, linknode2);
+    }
+  }  
+ 
+  for (Xposer current: xposers) {
+    current.cross();
+    current.straight();
+  }
+}
+
+
+//void makeGraphXposerNodes()
+//{
+  //// link nodes horizontally
+  //for (int j=0; j<xposernodes.size(); j++){
+    //XposerNode currentNode = xposernodes.get(j);
+    //Node linknode1 = nodes.get(j);
+    //Node linknode2;
+    //XposerNode linknode2x;
+    ////If stage is 0, we are on a source node. Connect to first decision node
+    //if (currentNode.label.contains("S") || currentNode.label.contains("D")){
+      //currentNode.linkStraight(xposernodes.get(j+1));
+      //linknode2x = currentNode.nextNodeSameLevel;
+      //linknode2 = nodes.get(findIndex(linknode2x.level, linknode2x.stage));
+      //g.linkNodes(linknode1, linknode2);
+    //}
+  //}    
+  //
+//
+  //// link nodes vertically
+  //for (int j=0; j<numInputs; j++){
+    //int t = 1;
+    //Node linknode1;
+    //Node linknode2;
+    //XposerNode linknode1x;
+    //XposerNode linknode2x;
+   ////Populate all nodes in each level
+    //for (int i=0; i<numInputs+2; i++){
+      ////First check for source and terminal node
+      //if (i != 0 && i!= (numInputs+2) - 1) {
+	////Then check for odd stage on level 0 and increment the level
+	//if (j == 0){
+	  //if (findIndex(j,i)!=-1){
+	    //linknode1x = xposernodes.get(findIndex(j,i));
+	    //linknode1x.pairNode(xposernodes.get(findNextIndex(j+1, i)));
+	    //xposers.add(new Xposer(linknode1x));
+	    //linknode1x.linkCross(xposernodes.get(findNextIndex(j+1, i+1)));
+	    //linknode2x = linknode1x.nextNodeDiffLevel;
+	    //linknode1 = nodes.get(findIndex(linknode1x.level,linknode1x.stage));
+	    //linknode2 = nodes.get(findNextIndex(linknode2x.level, linknode2x.stage));
+	    //g.linkNodes(linknode1, linknode2); 
+	  //}
+	//}
+	////Then check for odd stage on level n-1 if n is even and decrement the level
+	//else if (j == numInputs - 1){
+	  //if (findIndex(j,i)!=-1){
+	    //linknode1x = xposernodes.get(findIndex(j,i));
+	    //linknode1x.pairNode(xposernodes.get(findNextIndex(j-1, i)));
+	    //linknode1x.linkCross(xposernodes.get(findNextIndex(j-1, i+1)));
+	    //linknode2x = linknode1x.nextNodeDiffLevel;
+	    //linknode1 = nodes.get(findIndex(linknode1x.level,linknode1x.stage));
+	    //linknode2 = nodes.get(findNextIndex(linknode2x.level, linknode2x.stage));
+	    //g.linkNodes(linknode1, linknode2); 
+	  //}
+	//}
+	////Then check for even stage on level n-1 if n is odd
+	//else if (j%2 == 0){
+	  //linknode1x = xposernodes.get(findIndex(j,i));
+	  //linknode1x.linkCross(xposernodes.get(findNextIndex(j+t, i+1)));
+	  //linknode1x.pairNode(xposernodes.get(findNextIndex(j+t, i)));
+	  ////println(linknode1x.label + " is paired with " + linknode1x.pair.label);
+	  //linknode2x = linknode1x.nextNodeDiffLevel;
+	  //linknode1 = nodes.get(findIndex(linknode1x.level,linknode1x.stage));
+	  //linknode2 = nodes.get(findNextIndex(linknode2x.level, linknode2x.stage));
+	  //t *= -1; 
+	  //g.linkNodes(linknode1, linknode2); 
+	//}
+	//else if (j%2 == 1){
+	  //linknode1x = xposernodes.get(findIndex(j,i));
+	  //linknode1x.linkCross(xposernodes.get(findNextIndex(j-t, i+1)));
+	  ////linknode1x.pairNode(xposernodes.get(findNextIndex(j-t, i)));
+	  //linknode2x = linknode1x.nextNodeDiffLevel;
+	  //linknode1 = nodes.get(findIndex(linknode1x.level,linknode1x.stage));
+	  //linknode2 = nodes.get(findNextIndex(linknode2x.level, linknode2x.stage));
+	  //t *= -1; 
+	  //g.linkNodes(linknode1, linknode2); 
+	//}	  
+      //} 
+    //}
+  //}
 
   //Test all decision nodes for pair
   //for (XposerNode currentNode : xposernodes) {
@@ -146,7 +225,7 @@ void makeGraphXposerNodes()
       //}
     //}
   //}
-}
+//}
 
  
 void makeGraph()
@@ -274,6 +353,7 @@ int numXposers(int n) {
 void route(){
   destLevel.clear();
   xposernodes.clear();
+  xposers.clear();
   nodes.clear();
   g.clearNodes();
   for (String str : inputList){

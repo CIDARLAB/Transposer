@@ -22,6 +22,7 @@ boolean error = false;
 int missingOutput = 0;
 DirectedGraph g = new DirectedGraph();
 ArrayList<XposerNode> xposernodes = new ArrayList<XposerNode>();
+ArrayList<Xposer> xposers = new ArrayList<Xposer>();
 ArrayList<Node> nodes = new ArrayList<Node>();
 
 
@@ -67,7 +68,6 @@ int textBoxHeight = 35;
 int buttonHeight = 35;
 int buttonWidth = 100;
 
-PImage cross, straight;
 PFont font;
 
 void setup() {
@@ -391,20 +391,15 @@ void numInputsBtn(){
 
   cp5.get(Button.class, "numInputsBtn").setLabel("SAVED!");
 
-  //for (int j = 0; j < numInputs; j++){
-   //cp5.get(Textfield.class, "Output"+j).setVisible(true);
-  //}
-  //if (numInputs < 10) {
-    //for (int i = numInputs; i < 10; i++){
-      //cp5.get(Textfield.class, "Output"+i).setVisible(false);
-    //}
-  //}
   xposernodes.clear();
+  xposers.clear();
   nodes.clear();
   g.clearNodes();
   populateNodes();
   //makeGraph();
-  makeGraphXposerNodes();
+  //makeGraphXposerNodes();
+  makeXposers();
+  makeXposerGraph();
 }
 
 void errorMessage(){
@@ -734,21 +729,30 @@ void randomize() {
 }
 
 void test() {
-  inputList.clear();
-  int[] testArray = new int[numInputs];
-  for (int t=0; t<testArray.length; t++){
-    testArray[t] = t;
+  xposernodes.clear();
+  xposers.clear();
+  nodes.clear();
+  g.clearNodes();
+  populateNodes();
+  makeXposers();
+
+  //Route source nodes to first decision node
+  for (int j=0; j<xposernodes.size(); j++){
+    XposerNode currentNode = xposernodes.get(j);
+    Node linknode1 = nodes.get(j);
+    Node linknode2;
+    XposerNode linknode2x;
+    //If stage is 0, we are on a source node. Connect to first decision node
+    if (currentNode.label.contains("S")){
+      currentNode.linkStraight(xposernodes.get(j+1));
+      linknode2x = currentNode.nextNodeSameLevel;
+      linknode2 = nodes.get(findIndex(linknode2x.level, linknode2x.stage));
+      g.linkNodes(linknode1, linknode2);
+    }
+  }  
+ 
+  for (Xposer current: xposers) {
+    current.cross();
+    current.straight();
   }
-  testArray = sort(testArray);
-  for (int i=0; i<numInputs; i++) {
-    inputList.add(i + ": " + testArray[i]);
-  }
-  route();
-  inputList.clear();
-  testArray = reverse(testArray);
-  for (int i=0; i<numInputs; i++) {
-    inputList.add(i + ": " + testArray[i]);
-  }
-  route();
-  inputList.clear();
 }
