@@ -403,7 +403,8 @@ void numInputsBtn(){
   nodes.clear();
   g.clearNodes();
   populateNodes();
-  makeGraph();
+  //makeGraph();
+  makeGraphXposerNodes();
 }
 
 void errorMessage(){
