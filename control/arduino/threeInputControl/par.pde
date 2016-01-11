@@ -286,6 +286,17 @@ void makeGraph()
   }
 }
 
+int findInputForValue(int margin) {
+  int index=-1;
+  for (int i = 0; i < inputDiff.size(); i++){
+    if (inputDiff.get(i) == margin) {
+      index = i;
+      break;
+    }
+  }
+  return index;
+}
+
 int findDiffIndex(int level) {
   int index=-1;
   for (int i = 0; i < levelDifference.size(); i++){
@@ -312,6 +323,17 @@ int findDestIndex(int level) {
   int index=-1;
   for (int i = 0; i < destLevel.size(); i++){
     if (destLevel.get(i) == level) {
+      index = i;
+      break;
+    }
+  }
+  return index;
+}
+
+int findXposer(XposerNode topLeftNode) {
+  int index=-1;
+  for (int i = 0; i < xposers.size(); i++) {
+    if (xposers.get(i).topLeftNode == topLeftNode) {
       index = i;
       break;
     }
@@ -352,10 +374,18 @@ int numXposers(int n) {
 
 void route(){
   destLevel.clear();
+  levelDifference.clear();
+  inputOrder.clear();
+  inputDiff.clear();
   xposernodes.clear();
   xposers.clear();
   nodes.clear();
   g.clearNodes();
+
+  for (int i=0; i<numInputs; i++){
+    levelDifference.append(0);
+  }
+
   for (String str : inputList){
     String[] list = split(str, " ");
     destLevel.append(int(list[1]));
@@ -369,13 +399,132 @@ void route(){
     error = false;
   }
   if (!error){
+    println(destLevel);
     populateNodes();
+    makeXposers();
   }
-  if (!greedyFail) {
-    routingAlgorithm();
+
+  routeFromSource();
+
+  //Order the inputs to be routed by highest level difference
+  for (int l=0; l<numInputs; l++){
+    levelDifference.set(l, findDestIndex(l)-l);
+    inputDiff.append(abs(levelDifference.get(l)));
+  } 
+
+  boolean[] ordered = new boolean[numInputs];
+
+  for (int l=0; l<numInputs; l++){
+    int diffMax = inputDiff.max();
+    println(ordered);
+    if (ordered[findInputForValue(diffMax)] == false){
+      inputOrder.append(findInputForValue(diffMax));
+      ordered[findInputForValue(diffMax)] = true;
+      inputDiff.set(findInputForValue(diffMax), 0); 
+    }
   }
-  else {
-    patientAlgorithm();
+
+  for (int l=0; l<numInputs; l++){
+    if (ordered[l] == false){
+      inputOrder.append(l);
+    }
+  }
+    
+  println("levelDifference = " + levelDifference);
+  println("Order to route inputs " + inputOrder);
+
+  for (int k=0; k<numInputs; k++) {
+    routeInput(inputOrder.get(k));
+  }
+
+  //check that all xposers have been touched
+  for (Xposer current: xposers) {
+    if (current.crossed == null) {
+      println("Something is amiss " + current.topLeftNode.label + " is null");
+    }
+  }
+}
+
+void routeFromSource(){
+  //Route source nodes to first decision node
+  for (int j=0; j<xposernodes.size(); j++){
+    XposerNode currentNode = xposernodes.get(j);
+    Node linknode1 = nodes.get(j);
+    Node linknode2;
+    XposerNode linknode2x;
+
+    //If stage is 0, we are on a source node. Connect to first decision node
+    if (currentNode.label.contains("S")){
+      currentNode.linkStraight(xposernodes.get(j+1));
+      linknode2x = currentNode.nextNodeSameLevel;
+      linknode2 = nodes.get(findIndex(linknode2x.level, linknode2x.stage));
+      g.linkNodes(linknode1, linknode2);
+    }
+  }  
+}
+
+void routeInput(int input) {
+  int goalLevel = findDestIndex(input);
+  println("input: " + input);
+  println("goal Level: " + goalLevel);
+  int currentMargin;
+  int currentLevel = input;
+
+
+  //Start at stage 1 since we've already routed from the source to first decision node
+  for (int i=1; i<numInputs+1; i++){ 
+    currentMargin = goalLevel - currentLevel;
+    //Check to see if the result of the last move resulted in an unrouteable situation 
+    //i.e., (the current margin is greater than the number stages we have left)
+    if ((numInputs+1 - i) < currentMargin) {
+      //UNROUTABLE
+      println("input " + input + " can't be routed!");
+      break;
+    }
+    //If a node exists where I am
+    if (findIndex(currentLevel, i) != -1) {
+      //If I can increment my level and need to
+      if ( ((currentLevel%2==0 && i%2==1) || (currentLevel%2==1 && i%2==0)) ){
+	//Check to see if the xposer associated with the current node has been set
+	if (xposers.get(findXposer(xposernodes.get(findIndex(currentLevel, i)))).crossed != null) {
+	  //Then check to see if it's crossed or straight. If it's crossed, increment level and move on
+	  if (xposers.get(findXposer(xposernodes.get(findIndex(currentLevel, i)))).crossed == true) {
+	    currentLevel += 1; 
+	    currentMargin = goalLevel - currentLevel;
+	  }
+	}
+	else {
+	  if (currentMargin > 0) {
+	    xposers.get(findXposer(xposernodes.get(findIndex(currentLevel, i)))).cross();
+	    currentLevel += 1;
+	    currentMargin = goalLevel - currentLevel;
+	  }
+	  else {
+	    xposers.get(findXposer(xposernodes.get(findIndex(currentLevel, i)))).straight();
+	  }
+	}
+      }
+      //If I can decrement my level and need to. CHECK THIS, using else instead of else if to test for even/even odd/odd case
+      else {
+	if (xposers.get(findXposer(xposernodes.get(findIndex(currentLevel-1, i)))).crossed != null) {
+	  //Then check to see if it's crossed or straight. If it's crossed, decrement level and move on
+	  if (xposers.get(findXposer(xposernodes.get(findIndex(currentLevel-1, i)))).crossed == true) {
+	    currentLevel -= 1; 
+	    currentMargin = goalLevel - currentLevel;
+	  }
+	}
+	else {
+	  if (currentMargin < 0) {
+	    xposers.get(findXposer(xposernodes.get(findIndex(currentLevel-1, i)))).cross();
+	    currentLevel -= 1;
+	    currentMargin = goalLevel - currentLevel;
+	  }
+	  else {
+	    xposers.get(findXposer(xposernodes.get(findIndex(currentLevel-1, i)))).straight();
+	  }
+	}
+      }
+    }
   }
 }
 

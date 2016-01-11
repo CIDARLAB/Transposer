@@ -1,5 +1,7 @@
+//topLeftNode must always fall on even levels/odd stages or odd stages/even levels
+
 public class Xposer {
-  boolean crossed;
+  Boolean crossed;
   Pump outside;
   Pump inside;
   XposerNode topLeftNode;

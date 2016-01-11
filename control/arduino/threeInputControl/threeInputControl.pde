@@ -15,6 +15,8 @@ int dropdownIndex = 0;
 IntList destLevel = new IntList();
 IntList currentLevel = new IntList();
 IntList levelDifference = new IntList();
+IntList inputOrder = new IntList();
+IntList inputDiff = new IntList();
 boolean greedyFail = false;
 
 //Graph display variables
@@ -24,7 +26,6 @@ DirectedGraph g = new DirectedGraph();
 ArrayList<XposerNode> xposernodes = new ArrayList<XposerNode>();
 ArrayList<Xposer> xposers = new ArrayList<Xposer>();
 ArrayList<Node> nodes = new ArrayList<Node>();
-
 
 //Flow Pump variables
 int pwmSpeed = 100;	//PWM duty cycle from 0-255
@@ -251,20 +252,6 @@ void setup() {
      .setSize(12)
      ;
 
-  //for (int j = 0; j < numInputs; j++){
-   //cp5.addTextfield("Output" + j)
-     //.setPosition(width-margin, (3*(height/8)-(textBoxHeight/2)) + (textBoxHeight*2) * (j+1))
-     //.setSize(25,textBoxHeight)
-     //.setFont(font)
-     //.setColor(color(50,50,50))
-     //.setColorCursor(color(0,0,0))
-     //.setText(str(j))
-     //.setLabel("Output "+ j)
-     //.setVisible(true)
-     //.setId(j)
-     //;   
-  //}
-
     cp5.addTextfield("numInputsTxt")
      .setPosition(margin+buttonWidth*1.5, height/16+buttonHeight)
      .setSize(25,textBoxHeight)
@@ -274,7 +261,6 @@ void setup() {
      .setLabel("Number of Inputs")
      .setText(str(numInputs))
      .setColorCaptionLabel(#FFFFFF)
-     //.setTab("inputs")
      ;     
   cp5.getController("numInputsTxt")
      .getCaptionLabel()
@@ -289,7 +275,6 @@ void setup() {
      .setColorBackground(0xff00ff00 + 0x88000000)
      .setColorForeground(0xff00ff00)
      .setOff()
-     //.setTab("inputs")
      .getCaptionLabel()
      .setFont(font)
      .setSize(15)
@@ -301,8 +286,6 @@ void setup() {
     inputList.add(i + ": " + i);
   }
 
-  //List l = Arrays.asList("a", "b", "c", "d", "e", "f", "g", "h");
-  /* add a ScrollableList, by default it behaves like a DropdownList */
   cp5.addScrollableList("dropdown")
      .setPosition(20+width/2, height/16)
      .setSize(width/2-40, height-40)
@@ -311,9 +294,6 @@ void setup() {
      .addItems(inputList)
      .setLabel("Routing: Input - Output")
      .setColorBackground(#00ffff + 0x88000000)
-     //.getCaptionLabel()
-     //.setFont(font)
-     //.setSize(15)
      .setType(ScrollableList.DROPDOWN)
      .setOpen(true) 
      .getValueLabel()
@@ -355,12 +335,6 @@ void guiDefault() {
   text("Control", 20, 4*height/16-5);
   text("Routing", 20, 7*height/16-5);
   cp5.get(ScrollableList.class, "dropdown").open();
-  //text("Flow Pumps:", 20, 1*(height/8) - textBoxHeight/2);
-  //text("Control Pumps:", 20, 2*(height/8) - textBoxHeight/2); 
-  //text("Flow Routing:", 20 , 3*(height/8));
-  //for (int j = 0; j < numInputs; j++){
-    //text(j, 25, 3*(height/8) + 7 + (textBoxHeight*2) * (j+1));
-  //}
 }
 
 void actuate() {
@@ -396,8 +370,6 @@ void numInputsBtn(){
   nodes.clear();
   g.clearNodes();
   populateNodes();
-  //makeGraph();
-  //makeGraphXposerNodes();
   makeXposers();
   makeXposerGraph();
 }
@@ -751,8 +723,17 @@ void test() {
     }
   }  
  
+  for (int j=0; j<xposers.size()-2; j++) {
+    Xposer current = xposers.get(j);
+    if (j%2==0){
+      current.cross();
+    }
+    else {
+      current.straight();
+    }
+  }
+
   for (Xposer current: xposers) {
-    current.cross();
-    current.straight();
+    println(current.crossed);
   }
 }

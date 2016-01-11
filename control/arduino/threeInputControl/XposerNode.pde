@@ -1,10 +1,4 @@
-/**
- * Simmple graph layout system
- * http://processingjs.nihongoresources.com/graphs
- * This code is in the public domain
- */
-
-// This is a generic node in a graph
+// This is a node in the graph visualization 
 class XposerNode
 {
   int stage;

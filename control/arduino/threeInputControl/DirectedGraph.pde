@@ -10,7 +10,8 @@
 class DirectedGraph
 {
   ArrayList<Node> nodes = new ArrayList<Node>();
-  FlowAlgorithm flower = new CircleFlowAlgorithm();
+  //FlowAlgorithm flower = new CircleFlowAlgorithm();
+  FlowAlgorithm flower = new ForceDirectedFlowAlgorithm();
 
   void setFlowAlgorithm(FlowAlgorithm f) {
     flower = f; }
