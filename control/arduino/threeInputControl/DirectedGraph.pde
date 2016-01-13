@@ -11,10 +11,10 @@ class DirectedGraph
 {
   ArrayList<Node> nodes = new ArrayList<Node>();
   //FlowAlgorithm flower = new CircleFlowAlgorithm();
-  FlowAlgorithm flower = new ForceDirectedFlowAlgorithm();
+  //FlowAlgorithm flower = new ForceDirectedFlowAlgorithm();
 
-  void setFlowAlgorithm(FlowAlgorithm f) {
-    flower = f; }
+  //void setFlowAlgorithm(FlowAlgorithm f) {
+    //flower = f; }
 
   void addNode(Node node) {
     if(!nodes.contains(node)) {
@@ -54,7 +54,7 @@ class DirectedGraph
     return leaves; }
 
   // the method most people will care about
-  boolean reflow() { return flower.reflow(this); }
+  //boolean reflow() { return flower.reflow(this); }
 
   // this does nothing other than tell nodes to draw themselves.
   void draw() {

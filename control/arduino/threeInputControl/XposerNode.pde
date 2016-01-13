@@ -30,4 +30,19 @@ class XposerNode
   void linkCross(XposerNode _nextNodeDiffLevel) {
     nextNodeDiffLevel = _nextNodeDiffLevel;
   }
+
+  ArrayList<XposerNode> adjacentNodes(XposerNode last){
+    ArrayList<XposerNode> adjacent = new ArrayList<XposerNode>();
+    adjacent.add(last.nextNodeSameLevel);
+    adjacent.add(last.nextNodeDiffLevel);
+    for (XposerNode current : adjacent) {
+      if (current != null){
+	break;
+      }
+      else {
+	return new ArrayList<XposerNode>();
+      }
+    }
+    return new ArrayList<XposerNode>(adjacent);
+  }
 }

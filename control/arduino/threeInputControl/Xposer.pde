@@ -33,10 +33,6 @@ public class Xposer {
     Node linknode2;
     Node linknode1p;
     Node linknode2p;
-    //linknode1 = nodes.get(findIndex(topLeftNode.level,topLeftNode.stage));
-    //linknode2 = nodes.get(findNextIndex(topLeftNode.pair.level,topLeftNode.stage+1));
-    //linknode1p = nodes.get(findIndex(topLeftNode.pair.level,topLeftNode.pair.stage));
-    //linknode2p = nodes.get(findNextIndex(topLeftNode.level,topLeftNode.pair.stage+1));
     linknode1 = nodes.get(findIndex(topLeftNode.level,topLeftNode.stage));
     linknode2 = nodes.get(findNextIndex(topLeftNode.level+1,topLeftNode.stage+1));
     linknode1p = nodes.get(findIndex(topLeftNode.level+1,topLeftNode.pair.stage));

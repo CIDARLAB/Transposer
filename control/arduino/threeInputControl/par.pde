@@ -63,11 +63,10 @@ void makeXposers() {
   for (int j=0; j<numInputs; j++){
     int t = 1;
     XposerNode linknode1x;
-    XposerNode linknode2x;
    //Populate all nodes in each level
-    for (int i=0; i<numInputs+2; i++){
+    for (int i=0; i<numInputs+1; i++){
       //First check for source and terminal node
-      if (i != 0 && i!= (numInputs+2) - 1) {
+      if (i != 0 && i!= (numInputs+1)) {
 	//Then check for odd stage on level 0 and increment the level
 	if (j == 0){
 	  if (findIndex(j,i)!=-1){
@@ -75,7 +74,7 @@ void makeXposers() {
 	    linknode1x.pairNode(xposernodes.get(findNextIndex(j+1, i)));
 	    xposers.add(new Xposer(linknode1x));
 	    linknode1x.linkCross(xposernodes.get(findNextIndex(j+1, i+1)));
-	    linknode2x = linknode1x.nextNodeDiffLevel;
+	    linknode1x.linkStraight(xposernodes.get(findNextIndex(j, i+1)));
 	  }
 	}
 	//Then check for odd stage on level n-1 if n is even and decrement the level
@@ -84,7 +83,7 @@ void makeXposers() {
 	    linknode1x = xposernodes.get(findIndex(j,i));
 	    linknode1x.pairNode(xposernodes.get(findNextIndex(j-1, i)));
 	    linknode1x.linkCross(xposernodes.get(findNextIndex(j-1, i+1)));
-	    linknode2x = linknode1x.nextNodeDiffLevel;
+	    linknode1x.linkStraight(xposernodes.get(findNextIndex(j, i+1)));
 	  }
 	}
 	//Then check for even stage on level n-1 if n is odd
@@ -92,27 +91,27 @@ void makeXposers() {
 	  linknode1x = xposernodes.get(findIndex(j,i));
 	  linknode1x.linkCross(xposernodes.get(findNextIndex(j+t, i+1)));
 	  linknode1x.pairNode(xposernodes.get(findNextIndex(j+t, i)));
+	  linknode1x.linkStraight(xposernodes.get(findNextIndex(j, i+1)));
 	  if (t == 1){
 	    xposers.add(new Xposer(linknode1x));
 	  }
-	  linknode2x = linknode1x.nextNodeDiffLevel;
 	  t *= -1; 
 	}
 	else if (j%2 == 1){
 	  linknode1x = xposernodes.get(findIndex(j,i));
 	  linknode1x.linkCross(xposernodes.get(findNextIndex(j-t, i+1)));
 	  linknode1x.pairNode(xposernodes.get(findNextIndex(j-t, i)));
+	  linknode1x.linkStraight(xposernodes.get(findNextIndex(j, i+1)));
 	  if (t == -1){
 	    xposers.add(new Xposer(linknode1x));
 	  }
-	  linknode2x = linknode1x.nextNodeDiffLevel;
 	  t *= -1; 
 	}	  
       } 
     }
   }
-  println("calculated number of xposers " + numXposers(numInputs));
-  println("actual number of xposers " + xposers.size());
+  //println("calculated number of xposers " + numXposers(numInputs));
+  //println("actual number of xposers " + xposers.size());
 }
 
 void makeXposerGraph(){
@@ -406,6 +405,8 @@ void route(){
 
   routeFromSource();
 
+  pathSearch(xposernodes.get(findIndex(0,0)), xposernodes.get(findIndex(0, numInputs+1)));
+
   //Order the inputs to be routed by highest level difference
   for (int l=0; l<numInputs; l++){
     levelDifference.set(l, findDestIndex(l)-l);
@@ -416,7 +417,6 @@ void route(){
 
   for (int l=0; l<numInputs; l++){
     int diffMax = inputDiff.max();
-    println(ordered);
     if (ordered[findInputForValue(diffMax)] == false){
       inputOrder.append(findInputForValue(diffMax));
       ordered[findInputForValue(diffMax)] = true;
@@ -433,9 +433,28 @@ void route(){
   println("levelDifference = " + levelDifference);
   println("Order to route inputs " + inputOrder);
 
+  //test for adjacent nodes method
+  //for (XposerNode hippo : xposernodes){
+    //ArrayList<XposerNode> chickDuck = hippo.adjacentNodes(hippo);
+    //String[] adjacent = new String[2];
+    //if (chickDuck != null){ 
+      //for (int i=0; i<chickDuck.size(); i++){
+	//if (chickDuck.get(i) == null) {
+	  //adjacent[i] = "null";
+	//}
+	//else {
+	//adjacent[i] = chickDuck.get(i).label;
+	//}	
+      //}
+    //}
+    //println("Node " + hippo.label + " is adjacent to " + adjacent[0] + " " + adjacent[1]);
+  //}
+
   for (int k=0; k<numInputs; k++) {
     routeInput(inputOrder.get(k));
   }
+  
+  //xposers.get(findXposer(xposernodes.get(findIndex(2, 7))));
 
   //check that all xposers have been touched
   for (Xposer current: xposers) {
@@ -469,6 +488,9 @@ void routeInput(int input) {
   println("goal Level: " + goalLevel);
   int currentMargin;
   int currentLevel = input;
+  int lastDecisionStage;
+  boolean crossedState;
+  Xposer lastDecisionXposer = null;
 
 
   //Start at stage 1 since we've already routed from the source to first decision node
@@ -494,13 +516,20 @@ void routeInput(int input) {
 	  }
 	}
 	else {
+	  lastDecisionXposer = xposers.get(findXposer(xposernodes.get(findIndex(currentLevel, i))));
 	  if (currentMargin > 0) {
-	    xposers.get(findXposer(xposernodes.get(findIndex(currentLevel, i)))).cross();
+	    //xposers.get(findXposer(xposernodes.get(findIndex(currentLevel, i)))).cross();
+	    lastDecisionXposer.cross();
 	    currentLevel += 1;
 	    currentMargin = goalLevel - currentLevel;
+	    lastDecisionStage = i;
+	    crossedState = true;
 	  }
 	  else {
-	    xposers.get(findXposer(xposernodes.get(findIndex(currentLevel, i)))).straight();
+	    //xposers.get(findXposer(xposernodes.get(findIndex(currentLevel, i)))).straight();
+	    lastDecisionXposer.straight();
+	    crossedState = false;
+	    lastDecisionStage = i;
 	  }
 	}
       }
@@ -514,17 +543,27 @@ void routeInput(int input) {
 	  }
 	}
 	else {
+	  lastDecisionXposer = xposers.get(findXposer(xposernodes.get(findIndex(currentLevel-1, i))));
 	  if (currentMargin < 0) {
-	    xposers.get(findXposer(xposernodes.get(findIndex(currentLevel-1, i)))).cross();
+	    //xposers.get(findXposer(xposernodes.get(findIndex(currentLevel-1, i)))).cross();
+	    lastDecisionXposer.cross();
 	    currentLevel -= 1;
 	    currentMargin = goalLevel - currentLevel;
+	    lastDecisionStage = i;
+	    crossedState = true;
 	  }
 	  else {
-	    xposers.get(findXposer(xposernodes.get(findIndex(currentLevel-1, i)))).straight();
+	    //xposers.get(findXposer(xposernodes.get(findIndex(currentLevel-1, i)))).straight();
+	    lastDecisionXposer.straight();
+	    crossedState = false;
+	    lastDecisionStage = i;
 	  }
 	}
       }
     }
+  }
+  if (goalLevel != currentLevel) {
+    println("Input " + input + " doesn't match goal level");
   }
 }
 
@@ -821,3 +860,38 @@ void patientAlgorithm() {
     println("Patient Algorithm Successful for " + destLevel);
   }
 }      
+
+void pathSearch(XposerNode start, XposerNode finish) {
+  ArrayList<XposerNode> visited = new ArrayList<XposerNode>();
+  ArrayList<ArrayList<XposerNode>> paths = new ArrayList<ArrayList<XposerNode>>();
+  XposerNode currentNode = start;
+  visited.add(start);
+  breadthFirst(finish, visited, paths, currentNode);
+  for (ArrayList<XposerNode> path : paths){
+    for (XposerNode node : path){
+      print(node.label, " ");
+    }
+    println();
+  }
+}    	
+
+void breadthFirst(XposerNode finish, ArrayList<XposerNode> visited, ArrayList<ArrayList<XposerNode>> paths, XposerNode currentNode) {
+  if (currentNode == finish){
+    paths.add(new ArrayList(visited));
+    return;
+  }
+  else {
+    ArrayList<XposerNode> nodes = currentNode.adjacentNodes(currentNode);
+    for (XposerNode node : nodes) {
+      if (node != null) {
+	if (visited.contains(node)) {
+	  continue;
+	}
+	ArrayList<XposerNode> temp = new ArrayList<XposerNode>();
+	temp.addAll(visited);
+	temp.add(node);
+	breadthFirst(finish, temp, paths, node);
+      }
+    }
+  }
+}
