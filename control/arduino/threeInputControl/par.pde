@@ -398,14 +398,19 @@ void route(){
     error = false;
   }
   if (!error){
-    println(destLevel);
+    println("destLevel: " + destLevel);
     populateNodes();
     makeXposers();
   }
 
   routeFromSource();
 
-  pathSearch(xposernodes.get(findIndex(0,0)), xposernodes.get(findIndex(0, numInputs+1)));
+
+  //Test input paths method
+  //for (int i=0; i<inputPaths.get(0).size(); i++){
+    //println(inputPaths.get(0).get(i).label);
+  //}
+  //println(inputPaths.get(0).get(2).label);
 
   //Order the inputs to be routed by highest level difference
   for (int l=0; l<numInputs; l++){
@@ -429,7 +434,6 @@ void route(){
       inputOrder.append(l);
     }
   }
-    
   println("levelDifference = " + levelDifference);
   println("Order to route inputs " + inputOrder);
 
@@ -450,9 +454,78 @@ void route(){
     //println("Node " + hippo.label + " is adjacent to " + adjacent[0] + " " + adjacent[1]);
   //}
 
-  for (int k=0; k<numInputs; k++) {
-    routeInput(inputOrder.get(k));
+  //find all paths for each input 
+  for (int i=0; i<inputOrder.size(); i++){
+    ArrayList<ArrayList<XposerNode>> inputPaths = new ArrayList<ArrayList<XposerNode>>();
+    inputPaths = pathSearch(xposernodes.get(findIndex(inputOrder.get(i),0)), xposernodes.get(findIndex(findDestIndex(inputOrder.get(i)), numInputs+1)));
+    //create new treenode for each path/input combination
+    for (int j=0; j<inputPaths.size(); j++){
+      if (inputPaths == null) {
+	println("no paths found");
+	break;
+      }
+      else{
+	treenodes.add(new TreeNode(inputOrder.get(i), inputPaths.get(j), i));
+      }
+    }
   }
+
+  for (TreeNode current : treenodes) {
+    if (current.level == 0){
+      rootnodes.add(current);
+    }
+    for (int i=0; i<inputOrder.size(); i++){
+      if (current.level == i && current.level != inputOrder.size()-1){
+	for (TreeNode nextLevel : treenodes) {
+	  if (nextLevel.level == i+1) {
+	    current.addChild(nextLevel);
+	  }
+	}
+      }
+      if (current.level == i && current.level != 0){
+	for (TreeNode prevLevel : treenodes) {
+	  if (prevLevel.level == i-1) {
+	    current.addParent(prevLevel);
+	  }
+	}
+      }
+    }
+  }
+
+  for (TreeNode current : rootnodes) {
+    ArrayList<TreeNode> visited = new ArrayList<TreeNode>();
+    ArrayList<ArrayList<XposerNode>> pathsToCheck = new ArrayList<ArrayList<XposerNode>>();
+    visited.add(current);
+    validPath = pathMatch(current, pathsToCheck, visited);
+    if (validPath != null){
+      break;
+    }
+  }
+
+  //print out tree structure
+  //for (TreeNode current : treenodes){
+    //ArrayList<TreeNode> currentParents = current.getParents();
+    //ArrayList<TreeNode> currentChildren = current.getChildren();
+    //println("current level " + current.level);
+    //println("current input " + current.input);
+    //println("current children: ");
+    //for (int i=0; i<currentChildren.size(); i++){
+      //println("child " + i + " is on level " + currentChildren.get(i).level + " and contains paths for input " + currentChildren.get(i).input);
+    //}
+    //println("current parents: ");
+    //for (int i=0; i<currentParents.size(); i++){
+      //println("parent " + i + " is on level " + currentParents.get(i).level + " and contains paths for input " + currentParents.get(i).input);
+    //}
+  //}
+
+
+  //inputPaths = pathSearch(xposernodes.get(findIndex(inputOrder.get(0),0)), xposernodes.get(findIndex(findDestIndex(inputOrder.get(0)), numInputs+1)));
+
+
+  //route inputs in order
+  //for (int k=0; k<numInputs; k++) {
+    //routeInput(inputOrder.get(k));
+  //}
   
   //xposers.get(findXposer(xposernodes.get(findIndex(2, 7))));
 
@@ -463,6 +536,38 @@ void route(){
     }
   }
 }
+
+ArrayList<ArrayList<XposerNode>> pathMatch(TreeNode startNode, ArrayList<ArrayList<XposerNode> pathToCheck, ArrayList<TreeNode> visited){
+    ArrayList<XposerNode> matchNodes = new ArrayList<XposerNode>();
+    matchNodes = startNode.getPath();
+    pathToCheck.add(matchNodes);
+    for (ArrayList<XposerNode> currentPath : pathToCheck){
+      for (XposerNode currentNode : path){
+	print(node.label, " ");
+      }
+      println();
+    }
+ 
+}
+   if (currentNode == finish){
+    paths.add(new ArrayList(visited));
+    return;
+  }
+  else {
+    ArrayList<XposerNode> nodes = currentNode.adjacentNodes(currentNode);
+    for (XposerNode node : nodes) {
+      if (node != null) {
+	if (visited.contains(node)) {
+	  continue;
+	}
+	ArrayList<XposerNode> temp = new ArrayList<XposerNode>();
+	temp.addAll(visited);
+	temp.add(node);
+	breadthFirst(finish, temp, paths, node);
+      }
+    }
+  }
+ 
 
 void routeFromSource(){
   //Route source nodes to first decision node
@@ -861,7 +966,7 @@ void patientAlgorithm() {
   }
 }      
 
-void pathSearch(XposerNode start, XposerNode finish) {
+ArrayList<ArrayList<XposerNode>> pathSearch(XposerNode start, XposerNode finish) {
   ArrayList<XposerNode> visited = new ArrayList<XposerNode>();
   ArrayList<ArrayList<XposerNode>> paths = new ArrayList<ArrayList<XposerNode>>();
   XposerNode currentNode = start;
@@ -873,6 +978,7 @@ void pathSearch(XposerNode start, XposerNode finish) {
     }
     println();
   }
+  return paths;
 }    	
 
 void breadthFirst(XposerNode finish, ArrayList<XposerNode> visited, ArrayList<ArrayList<XposerNode>> paths, XposerNode currentNode) {

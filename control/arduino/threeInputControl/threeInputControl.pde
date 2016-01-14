@@ -23,9 +23,12 @@ boolean greedyFail = false;
 boolean error = false;
 int missingOutput = 0;
 DirectedGraph g = new DirectedGraph();
+ArrayList<TreeNode> treenodes = new ArrayList<TreeNode>();
 ArrayList<XposerNode> xposernodes = new ArrayList<XposerNode>();
 ArrayList<Xposer> xposers = new ArrayList<Xposer>();
 ArrayList<Node> nodes = new ArrayList<Node>();
+ArrayList<TreeNode> rootnodes = new ArrayList<TreeNode>();
+ArrayList<ArrayList<XposerNode>> validPath = new ArrayList<ArrayList<XposerNode>>();
 
 //Flow Pump variables
 int pwmSpeed = 100;	//PWM duty cycle from 0-255

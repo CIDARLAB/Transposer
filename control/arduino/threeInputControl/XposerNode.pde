@@ -33,6 +33,7 @@ class XposerNode
 
   ArrayList<XposerNode> adjacentNodes(XposerNode last){
     ArrayList<XposerNode> adjacent = new ArrayList<XposerNode>();
+    //setting adjacent[0] to a straight connection will prioritize the uncrossed connection in the algorithm
     adjacent.add(last.nextNodeSameLevel);
     adjacent.add(last.nextNodeDiffLevel);
     for (XposerNode current : adjacent) {
