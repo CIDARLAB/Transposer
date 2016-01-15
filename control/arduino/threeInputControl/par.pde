@@ -379,6 +379,8 @@ void route(){
   xposernodes.clear();
   xposers.clear();
   nodes.clear();
+  rootnodes.clear();
+  treenodes.clear();
   g.clearNodes();
 
   for (int i=0; i<numInputs; i++){
@@ -492,14 +494,30 @@ void route(){
     }
   }
 
-  for (TreeNode current : rootnodes) {
-    ArrayList<TreeNode> visited = new ArrayList<TreeNode>();
-    ArrayList<ArrayList<XposerNode>> pathsToCheck = new ArrayList<ArrayList<XposerNode>>();
-    visited.add(current);
-    validPath = pathMatch(current, pathsToCheck, visited);
-    if (validPath != null){
-      break;
+
+  //for (TreeNode current : rootnodes) {
+    //ArrayList<TreeNode> visited = new ArrayList<TreeNode>();
+    //ArrayList<ArrayList<XposerNode>> pathsToCheck = new ArrayList<ArrayList<XposerNode>>();
+    //visited.add(current);
+    //validPath = pathMatch(current, pathsToCheck, visited);
+    //if (validPath != null){
+      //break;
+    //}
+  //}
+
+  validPath = matchSetup(rootnodes);
+  
+  if (!validPath.isEmpty()){
+    println("found path");
+    for (ArrayList<XposerNode> currentPath : validPath){
+      for (XposerNode currentNode : currentPath){
+	print(currentNode.label, " ");
+      }
+      println();
     }
+  }
+  else {
+    println("no path found");
   }
 
   //print out tree structure
@@ -537,36 +555,85 @@ void route(){
   }
 }
 
-ArrayList<ArrayList<XposerNode>> pathMatch(TreeNode startNode, ArrayList<ArrayList<XposerNode> pathToCheck, ArrayList<TreeNode> visited){
-    ArrayList<XposerNode> matchNodes = new ArrayList<XposerNode>();
-    matchNodes = startNode.getPath();
-    pathToCheck.add(matchNodes);
-    for (ArrayList<XposerNode> currentPath : pathToCheck){
-      for (XposerNode currentNode : path){
-	print(node.label, " ");
-      }
-      println();
+ArrayList<ArrayList<XposerNode>> matchSetup(ArrayList<TreeNode> roots){
+  cease = false;
+  ArrayList<ArrayList<XposerNode>> pathsToCheck = new ArrayList<ArrayList<XposerNode>>();
+  for (TreeNode current : roots) {
+    ArrayList<TreeNode> visited = new ArrayList<TreeNode>();
+    visited.add(current);
+    println("new root node");
+    pathMatch(current, pathsToCheck, visited);
+    if (!pathsToCheck.isEmpty()){
+      break;
     }
- 
+    else {
+      pathsToCheck.clear();
+      continue;
+    }
+  }
+  return pathsToCheck;
 }
-   if (currentNode == finish){
-    paths.add(new ArrayList(visited));
-    return;
+
+void pathMatch(TreeNode startNode, ArrayList<ArrayList<XposerNode>> pathToCheck, ArrayList<TreeNode> visited){
+  ArrayList<XposerNode> matchNodes = new ArrayList<XposerNode>();
+  ArrayList<TreeNode> startChildren = startNode.getChildren();
+  //if i'm at the bottom of the routing tree, check paths for duplicate nodes
+  //if (cease == true){
+    //return;
+  //}
+  //else if (startChildren.isEmpty()) {
+  if (startChildren.isEmpty()) {
+    matchNodes = startNode.getPath();
+    pathToCheck.add(new ArrayList(matchNodes));
+    ArrayList<XposerNode> matchList = new ArrayList<XposerNode>();
+    for (ArrayList<XposerNode> pathLine : pathToCheck){
+      matchList.addAll(pathLine);
+    }
+    Set<XposerNode> matchSet = new HashSet<XposerNode>(matchList);
+    if (matchSet.size() < matchList.size()){
+      //println("duplicates found, bad path");
+      //println("size of pathtocheck: " + pathToCheck.size());
+      //println("level: " + startNode.level);
+      //println("input: " + startNode.input);
+      //for (ArrayList<XposerNode> currentPath : pathToCheck){
+        //for (XposerNode currentNode : currentPath){
+	  //print(currentNode.label, " ");
+	//}
+	//println();
+      //}
+      pathToCheck.remove(matchNodes);
+      //return;
+    }
+    else {
+      println("good path found!");
+      cease = true;
+      //return;
+    }
   }
   else {
-    ArrayList<XposerNode> nodes = currentNode.adjacentNodes(currentNode);
-    for (XposerNode node : nodes) {
-      if (node != null) {
-	if (visited.contains(node)) {
-	  continue;
-	}
-	ArrayList<XposerNode> temp = new ArrayList<XposerNode>();
+    for (TreeNode node : startChildren){
+      if (visited.contains(node)){
+	pathToCheck.remove(matchNodes);
+	continue;
+      }
+      else {
+	ArrayList<TreeNode> temp = new ArrayList<TreeNode>();
 	temp.addAll(visited);
 	temp.add(node);
-	breadthFirst(finish, temp, paths, node);
+        matchNodes = startNode.getPath();
+        pathToCheck.add(new ArrayList(matchNodes));
+        pathMatch(node, pathToCheck, temp);
+        if (cease == false){
+          pathToCheck.remove(matchNodes);
+        }
+	else {
+	  return;
+	}
       }
-    }
+    }	
+    //return;
   }
+}
  
 
 void routeFromSource(){

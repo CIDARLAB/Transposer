@@ -40,7 +40,7 @@ class TreeNode
     return parents;
   }
   
-  ArrayList<TreeNode> getPath() {
+  ArrayList<XposerNode> getPath() {
     return path;
   }
 }

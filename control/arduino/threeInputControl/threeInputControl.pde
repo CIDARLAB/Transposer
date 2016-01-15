@@ -17,6 +17,7 @@ IntList currentLevel = new IntList();
 IntList levelDifference = new IntList();
 IntList inputOrder = new IntList();
 IntList inputDiff = new IntList();
+boolean cease = false;
 boolean greedyFail = false;
 
 //Graph display variables
