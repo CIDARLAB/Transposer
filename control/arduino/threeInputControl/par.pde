@@ -509,16 +509,18 @@ void route(){
   
   if (!validPath.isEmpty()){
     println("found path");
-    for (ArrayList<XposerNode> currentPath : validPath){
-      for (XposerNode currentNode : currentPath){
-	print(currentNode.label, " ");
-      }
-      println();
-    }
+    routeValidPath(validPath);
+    //for (ArrayList<XposerNode> currentPath : validPath){
+      //for (XposerNode currentNode : currentPath){
+	//print(currentNode.label, " ");
+      //}
+      //println();
+    //}
   }
   else {
     println("no path found");
   }
+
 
   //print out tree structure
   //for (TreeNode current : treenodes){
@@ -555,6 +557,22 @@ void route(){
   }
 }
 
+void routeValidPath(ArrayList<ArrayList<XposerNode>> pathRoutes){
+  for (ArrayList<XposerNode> path : pathRoutes){
+    for (int i=0; i<path.size(); i++){
+      XposerNode node = path.get(i);
+      if (findXposer(node) != -1) {
+	if (path.get(i+1) == node.nextNodeSameLevel){
+	  xposers.get(findXposer(node)).straight();
+	}
+	else if (path.get(i+1) == node.nextNodeDiffLevel){
+	  xposers.get(findXposer(node)).cross();
+	}
+      }
+    }
+  }
+}
+
 ArrayList<ArrayList<XposerNode>> matchSetup(ArrayList<TreeNode> roots){
   cease = false;
   ArrayList<ArrayList<XposerNode>> pathsToCheck = new ArrayList<ArrayList<XposerNode>>();
@@ -578,10 +596,6 @@ void pathMatch(TreeNode startNode, ArrayList<ArrayList<XposerNode>> pathToCheck,
   ArrayList<XposerNode> matchNodes = new ArrayList<XposerNode>();
   ArrayList<TreeNode> startChildren = startNode.getChildren();
   //if i'm at the bottom of the routing tree, check paths for duplicate nodes
-  //if (cease == true){
-    //return;
-  //}
-  //else if (startChildren.isEmpty()) {
   if (startChildren.isEmpty()) {
     matchNodes = startNode.getPath();
     pathToCheck.add(new ArrayList(matchNodes));
@@ -591,23 +605,11 @@ void pathMatch(TreeNode startNode, ArrayList<ArrayList<XposerNode>> pathToCheck,
     }
     Set<XposerNode> matchSet = new HashSet<XposerNode>(matchList);
     if (matchSet.size() < matchList.size()){
-      //println("duplicates found, bad path");
-      //println("size of pathtocheck: " + pathToCheck.size());
-      //println("level: " + startNode.level);
-      //println("input: " + startNode.input);
-      //for (ArrayList<XposerNode> currentPath : pathToCheck){
-        //for (XposerNode currentNode : currentPath){
-	  //print(currentNode.label, " ");
-	//}
-	//println();
-      //}
       pathToCheck.remove(matchNodes);
-      //return;
     }
     else {
       println("good path found!");
       cease = true;
-      //return;
     }
   }
   else {
@@ -631,7 +633,6 @@ void pathMatch(TreeNode startNode, ArrayList<ArrayList<XposerNode>> pathToCheck,
 	}
       }
     }	
-    //return;
   }
 }
  
