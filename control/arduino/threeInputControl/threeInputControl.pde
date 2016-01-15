@@ -79,7 +79,6 @@ void setup() {
   fullScreen();
   font = createFont("AndaleMono-48.vlw",15, false);
   textFont(font);
-  ControlFont cfont = new ControlFont(font,241);
 
   //Setup Serial Connection
   println(Serial.list());

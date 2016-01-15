@@ -210,7 +210,7 @@ void route(){
       inputPaths = pathSearch(xposernodes.get(findIndex(inputOrder.get(i),0)), xposernodes.get(findIndex(findDestIndex(inputOrder.get(i)), numInputs+1)));
       //create new treenode for each path/input combination
       for (int j=0; j<inputPaths.size(); j++){
-	if (inputPaths == null) {
+	if (inputPaths.isEmpty()) {
 	  println("no paths found");
 	  break;
 	}
