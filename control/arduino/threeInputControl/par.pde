@@ -18,25 +18,25 @@ void populateNodes() {
 	xposernodes.add(new XposerNode("T"+j, j, i));
       }
       else {
-  //Then check for odd stage on level 0
-  if (j == 0 && i%2 == 1){
-    xposernodes.add(new XposerNode("D" + count, j, i));
-    count++;
-  }
-  //Then check for odd stage on level n-1 if n is even
-  else if (j == numInputs - 1 && numInputs%2 == 0 && i%2 == 1){
-    xposernodes.add(new XposerNode("D" + count, j, i));
-    count++;
-  }
-  //Then check for even stage on level n-1 if n is odd
-  else if (j == numInputs - 1 && numInputs%2 == 1 && i%2 == 0){
-    xposernodes.add(new XposerNode("D" + count, j, i));
-    count++;
-  }
-  else if (j != 0 && j != numInputs - 1){
-    xposernodes.add(new XposerNode("D" + count, j, i));
-    count++;
-  }    
+	//Then check for odd stage on level 0
+	if (j == 0 && i%2 == 1){
+	  xposernodes.add(new XposerNode("D" + count, j, i));
+	  count++;
+	}
+	//Then check for odd stage on level n-1 if n is even
+	else if (j == numInputs - 1 && numInputs%2 == 0 && i%2 == 1){
+	  xposernodes.add(new XposerNode("D" + count, j, i));
+	  count++;
+	}
+	//Then check for even stage on level n-1 if n is odd
+	else if (j == numInputs - 1 && numInputs%2 == 1 && i%2 == 0){
+	  xposernodes.add(new XposerNode("D" + count, j, i));
+	  count++;
+	}
+	else if (j != 0 && j != numInputs - 1){
+	  xposernodes.add(new XposerNode("D" + count, j, i));
+	  count++;
+	}    
       } 
     }
   }
@@ -214,9 +214,9 @@ void route(){
 	  println("no paths found");
 	  break;
 	}
-      else{
-	treenodes.add(new TreeNode(inputOrder.get(i), inputPaths.get(j), i));
-      }
+	else{
+	  treenodes.add(new TreeNode(inputOrder.get(i), inputPaths.get(j), i));
+	}
       }
     }
   

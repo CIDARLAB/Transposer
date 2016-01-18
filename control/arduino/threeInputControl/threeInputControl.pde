@@ -704,39 +704,18 @@ void randomize() {
 }
 
 void test() {
-  xposernodes.clear();
-  xposers.clear();
-  nodes.clear();
-  g.clearNodes();
-  populateNodes();
-  makeXposers();
+  PermutationGenerator pg = new PermutationGenerator(numInputs, 0);
 
-  //Route source nodes to first decision node
-  for (int j=0; j<xposernodes.size(); j++){
-    XposerNode currentNode = xposernodes.get(j);
-    Node linknode1 = nodes.get(j);
-    Node linknode2;
-    XposerNode linknode2x;
-    //If stage is 0, we are on a source node. Connect to first decision node
-    if (currentNode.label.contains("S")){
-      currentNode.linkStraight(xposernodes.get(j+1));
-      linknode2x = currentNode.nextNodeSameLevel;
-      linknode2 = nodes.get(findIndex(linknode2x.level, linknode2x.stage));
-      g.linkNodes(linknode1, linknode2);
+  while (pg.hasMore()) {
+    int[] temp =  pg.getNext();
+    inputList.clear();
+    for (int i = 0; i < temp.length; i++) {
+      inputList.add(i + ": " + temp[i]);
+      System.out.print(temp[i] + " ");
     }
-  }  
- 
-  for (int j=0; j<xposers.size()-2; j++) {
-    Xposer current = xposers.get(j);
-    if (j%2==0){
-      current.cross();
-    }
-    else {
-      current.straight();
-    }
-  }
-
-  for (Xposer current: xposers) {
-    println(current.crossed);
+    System.out.println();
+    cp5.get(ScrollableList.class, "dropdown").setItems(inputList);
+    println("Testing: " + inputList);
+    route();
   }
 }
