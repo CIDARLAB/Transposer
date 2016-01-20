@@ -33,8 +33,10 @@ public class PumpFlow {
 	//--Comment out of dispense operations stop working
 	CodeString = "A P" + str(pumpID) + " D" + str(uStepsAcc) +";";
         port.write(CodeString);
+	println(CodeString);
         CodeString = "V P" + str(pumpID) + " D" + str(uStepsSpeed) +";";
         port.write(CodeString);
+	println(CodeString);
 	//--end section
 
         if (dir) CodeString = "F P" + str(pumpID) + " D" + str(uStepsMove) +";";

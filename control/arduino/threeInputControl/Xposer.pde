@@ -18,7 +18,6 @@ public class Xposer {
   void actuateStraight(int uStepsMove) {
     outside.dispense(uStepsMove, false);
     inside.dispense(uStepsMove, true);
-    crossed = false;
   }
 
   boolean getCrossedStatus() { return crossed; }

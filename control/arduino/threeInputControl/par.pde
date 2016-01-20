@@ -175,6 +175,10 @@ void route(){
     //println("destLevel: " + destLevel);
     populateNodes();
     makeXposers();
+    for (int i=0; i<xposers.size(); i++){
+      Xposer current = xposers.get(i);
+      current.linkPumps(controlPumps.get(2*i), controlPumps.get(2*i+1));
+    }
 
     routeFromSource();
   

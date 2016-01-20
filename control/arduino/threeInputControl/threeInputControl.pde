@@ -55,16 +55,14 @@ int dispenseVolume;
 
 //Create arrays of control and flow pumps
 ArrayList<Pump> controlPumps = new ArrayList<Pump>();
-//Pump[] controlPumps; 
 ArrayList<PumpFlow> flowPumps = new ArrayList<PumpFlow>();
-//PumpFlow[] flowPumps = new PumpFlow[numInputs];
 
 //Constants
 boolean PUSH = true;
 boolean PULL = false;
 
 //Flags
-boolean initControl = false;
+boolean firstActuation = true;
 
 //Display Variables
 int margin = 50;
@@ -82,7 +80,7 @@ void setup() {
 
   //Setup Serial Connection
   println(Serial.list());
-  //myPort = new Serial(this, Serial.list()[7], 9600); // Open the port you are using at the rate you want:
+  myPort = new Serial(this, Serial.list()[7], 9600); // Open the port you are using at the rate you want:
   
   numControlPumps = 2 * numXposers(numInputs);
 
@@ -228,7 +226,7 @@ void setup() {
      .setSize(15)
      ;
 
-  cp5.addButton("return")
+  cp5.addButton("returnToOrigin")
      .setPosition(margin+4.5*buttonWidth,(height/4)+buttonHeight)
      .setSize(buttonWidth,buttonHeight)
      .setLabel(" Return ")
@@ -340,8 +338,40 @@ void guiDefault() {
   cp5.get(ScrollableList.class, "dropdown").open();
 }
 
-void actuate() {
+void returnToOrigin() {
+  for (Xposer current : xposers){
+    if (current.crossed == null){
+      println("Something is amiss. Xposer " + current.topLeftNode.label + " hasn't been touched");
+    }
+    else if (current.crossed == true){
+      current.actuateStraight(uStepsMove);
+    }
+    else {
+      current.actuateCross(uStepsMove);
+    }
+  }
+  firstActuation = true;
+}
 
+void actuate() {
+  int uStepsMoveActuate = uStepsMove;
+  if (firstActuation){
+    firstActuation = false;
+  }
+  else {
+    uStepsMoveActuate *= 2;
+  }
+  for (Xposer current : xposers){
+    if (current.crossed == null){
+      println("Something is amiss. Xposer " + current.topLeftNode.label + " hasn't been touched");
+    }
+    else if (current.crossed == true){
+      current.actuateCross(uStepsMoveActuate);
+    }
+    else {
+      current.actuateStraight(uStepsMoveActuate);
+    }
+  }
 }
 
 void numInputsBtn(){
@@ -374,6 +404,12 @@ void numInputsBtn(){
   g.clearNodes();
   populateNodes();
   makeXposers();
+  for (int i=0; i<xposers.size(); i++){
+    Xposer current = xposers.get(i);
+    current.linkPumps(controlPumps.get(2*i), controlPumps.get(2*i+1));
+    //println("Xposer " + current.topLeftNode.label + " is linked to pumps " + controlPumps.get(2*i).pumpID + " and " + controlPumps.get(2*i+1).pumpID);
+    //println("Xposer " + current.topLeftNode.label + " is linked to pumps " + current.outside.pumpID + " and " + current.inside.pumpID);
+  }
   makeXposerGraph();
 }
 
@@ -389,9 +425,6 @@ void startFlow() {
        .setColorBackground(0xffff0000 + 0x88000000)
        .setColorForeground(0xffff0000);
     for (int j = 0; j < numInputs; j++){
-      //println(flowPumps.get(j).motorPort);
-      //PumpFlow disp = flowPumps.get(j);
-      //pump.dispenseFlow(pwmSpeed);
       flowPumps.get(j).dispenseFlow(pwmSpeed);
     }
   }
@@ -637,16 +670,6 @@ void setFlowHardware(int temp_pwmSpeed) {
 }
 
 void dropdown(int n) {
-  /* request the selected item based on index n */
-  //println(n, cp5.get(ScrollableList.class, "dropdown").getItem(n));
-  
-  /* here an item is stored as a Map  with the following key-value pairs:
-   * name, the given name of the item
-   * text, the given text of the item by default the same as name
-   * value, the given value of the item, can be changed by using .getItem(n).put("value", "abc"); a value here is of type Object therefore can be anything
-   * color, the given color of the item, how to change, see below
-   * view, a customizable view, is of type CDrawable 
-   */
     cp5.getController("output")
      .setLabel("Output Number " + n)
      ;
@@ -656,10 +679,6 @@ void dropdown(int n) {
      .setSize(12)
      ;
   dropdownIndex = n;
- 
-   //CColor c = new CColor();
-  //c.setBackground(color(255,0,0));
-  //cp5.get(ScrollableList.class, "dropdown").getItem(n).put("color", c);
 }
 
 void setOutput() {
@@ -705,7 +724,6 @@ void randomize() {
 
 void test() {
   PermutationGenerator pg = new PermutationGenerator(numInputs, 0);
-
   while (pg.hasMore()) {
     int[] temp =  pg.getNext();
     inputList.clear();
