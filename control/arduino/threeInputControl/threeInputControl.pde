@@ -56,6 +56,7 @@ int dispenseVolume;
 //Create arrays of control and flow pumps
 ArrayList<Pump> controlPumps = new ArrayList<Pump>();
 ArrayList<PumpFlow> flowPumps = new ArrayList<PumpFlow>();
+ArrayList<Boolean> crossMap = new ArrayList<Boolean>();
 
 //Constants
 boolean PUSH = true;
@@ -355,21 +356,41 @@ void returnToOrigin() {
 
 void actuate() {
   int uStepsMoveActuate = uStepsMove;
+
   if (firstActuation){
+    for (int i=0; i<xposers.size(); i++){
+      Xposer current = xposers.get(i);
+      if (current.crossed == null){
+	println("Something is amiss. Xposer " + current.topLeftNode.label + " hasn't been touched");
+	crossMap.add(null);
+      }
+      else if (current.crossed == true){
+	current.actuateCross(uStepsMoveActuate);
+	crossMap.add(true);
+      }
+      else {
+	current.actuateStraight(uStepsMoveActuate);
+	crossMap.add(false);
+      }
+    }
     firstActuation = false;
   }
   else {
     uStepsMoveActuate *= 2;
-  }
-  for (Xposer current : xposers){
-    if (current.crossed == null){
-      println("Something is amiss. Xposer " + current.topLeftNode.label + " hasn't been touched");
-    }
-    else if (current.crossed == true){
-      current.actuateCross(uStepsMoveActuate);
-    }
-    else {
-      current.actuateStraight(uStepsMoveActuate);
+    for (int i=0; i<xposers.size(); i++){
+      Xposer current = xposers.get(i);
+      if (current.crossed == null){
+	println("Something is amiss. Xposer " + current.topLeftNode.label + " hasn't been touched");
+	crossMap.set(i, null);
+      }
+      else if ((current.crossed == true) && (crossMap.get(i) != true)){
+	current.actuateCross(uStepsMoveActuate);
+	crossMap.set(i, true);
+      }
+      else if ((current.crossed == false) && (crossMap.get(i) != false)){
+	current. actuateStraight(uStepsMoveActuate);
+	crossMap.set(i, false);
+      }
     }
   }
 }
@@ -378,6 +399,8 @@ void numInputsBtn(){
   controlPumps.clear();
   flowPumps.clear();
   inputList.clear();
+  crossMap.clear();
+  firstActuation = true;
   numInputs = int(cp5.get(Textfield.class, "numInputsTxt").getText().trim());
   numControlPumps = 2 * numXposers(numInputs);
 
