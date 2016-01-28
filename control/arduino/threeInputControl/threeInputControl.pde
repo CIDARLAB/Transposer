@@ -33,6 +33,7 @@ ArrayList<ArrayList<XposerNode>> validPath = new ArrayList<ArrayList<XposerNode>
 
 //Flow Pump variables
 int pwmSpeed = 100;	//PWM duty cycle from 0-255
+float loopDelay = 1;
 
 //Control Pump variables
 // Hardware 
@@ -129,7 +130,7 @@ void setup() {
      .setFont(font)
      .setColor(color(50,50,50))
      .setColorCursor(color(0,0,0))
-     .setText("4000")
+     .setText("1000")
      .setLabel("Air Displacement (uL)")
      .setColorCaptionLabel(#FFFFFF)
      ;   
@@ -142,6 +143,22 @@ void setup() {
  
   drawFlowSettings("settings", 100, 100);
   drawControlSettings("settings", 100, 210);
+
+   cp5.addTextfield("delay")
+     .setPosition(margin+3.5*buttonWidth, height/16+buttonHeight)
+     .setSize(textBoxWidth,textBoxHeight)
+     .setFont(font)
+     .setColor(color(50,50,50))
+     .setColorCursor(color(0,0,0))
+     .setText("1")
+     .setLabel("Loop Delay")
+     .setColorCaptionLabel(#FFFFFF)
+     ;   
+  cp5.getController("delay")
+     .getCaptionLabel()
+     .setFont(font)
+     .setSize(12)
+     ;
 
   cp5.addButton("startFlow")
      .setPosition(margin, height/16+buttonHeight)
@@ -324,6 +341,8 @@ void draw() {
 }
 
 void guiDefault() {  
+  //loopDelay = float(cp5.get(Textfield.class,"delay").getText().trim());
+
   fill(0); 
   dispenseVolume = int(cp5.get(Textfield.class,"controlVolume").getText().trim());   
   fill(#0000ff + 0x88000000);
@@ -337,6 +356,17 @@ void guiDefault() {
   text("Control", 20, 4*height/16-5);
   text("Routing", 20, 7*height/16-5);
   cp5.get(ScrollableList.class, "dropdown").open();
+
+  //if (cp5.get(Button.class,"startFlow").isOn()) {
+    //if (frameCount % (60*loopDelay) == 0){
+      //for (int j = 0; j < numInputs; j++){
+	//flowPumps.get(j).dispenseFlow(pwmSpeed);
+      //}
+      //for (int j = 0; j < numInputs; j++){
+	//flowPumps.get(j).dispenseFlow(0);
+      //}
+    //}
+  //}
 }
 
 void returnToOrigin() {
@@ -345,10 +375,12 @@ void returnToOrigin() {
       println("Something is amiss. Xposer " + current.topLeftNode.label + " hasn't been touched");
     }
     else if (current.crossed == true){
-      current.actuateStraight(uStepsMove);
+      //current.actuateStraight(uStepsMove);
+      current.actuateStraight(0, uStepsMove);
     }
     else {
-      current.actuateCross(uStepsMove);
+      //current.actuateCross(uStepsMove);
+      current.actuateCross(uStepsMove, 0);
     }
   }
   firstActuation = true;
@@ -365,18 +397,20 @@ void actuate() {
 	crossMap.add(null);
       }
       else if (current.crossed == true){
-	current.actuateCross(uStepsMoveActuate);
+	//current.actuateCross(uStepsMoveActuate);
+	current.actuateCross(0, uStepsMoveActuate);
 	crossMap.add(true);
       }
       else {
-	current.actuateStraight(uStepsMoveActuate);
+	//current.actuateStraight(uStepsMoveActuate);
+	current.actuateStraight(uStepsMoveActuate, 0);
 	crossMap.add(false);
       }
     }
     firstActuation = false;
   }
   else {
-    uStepsMoveActuate *= 2;
+    //uStepsMoveActuate *= 2;
     for (int i=0; i<xposers.size(); i++){
       Xposer current = xposers.get(i);
       if (current.crossed == null){
@@ -384,11 +418,13 @@ void actuate() {
 	crossMap.set(i, null);
       }
       else if ((current.crossed == true) && (crossMap.get(i) != true)){
-	current.actuateCross(uStepsMoveActuate);
+	//current.actuateCross(uStepsMoveActuate);
+	current.actuateCross(uStepsMoveActuate, uStepsMoveActuate);
 	crossMap.set(i, true);
       }
       else if ((current.crossed == false) && (crossMap.get(i) != false)){
-	current. actuateStraight(uStepsMoveActuate);
+	//current.actuateStraight(uStepsMoveActuate);
+	current. actuateStraight(uStepsMoveActuate, uStepsMoveActuate);
 	crossMap.set(i, false);
       }
     }

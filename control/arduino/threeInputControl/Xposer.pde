@@ -10,15 +10,25 @@ public class Xposer {
     topLeftNode = _topLeftNode;
   }
 
-  void actuateCross(int uStepsMove) {
-    outside.dispense(uStepsMove, true);
-    inside.dispense(uStepsMove, false);
+  void actuateCross(int uStepsMoveO, int uStepsMoveI) {
+    outside.dispense(uStepsMoveO, true);
+    inside.dispense(uStepsMoveI, false);
+  }
+////
+  void actuateStraight(int uStepsMoveO, int uStepsMoveI) {
+    outside.dispense(uStepsMoveO, false);
+    inside.dispense(uStepsMoveI, true);
   }
 
-  void actuateStraight(int uStepsMove) {
-    outside.dispense(uStepsMove, false);
-    inside.dispense(uStepsMove, true);
-  }
+  //void actuateCross(int uStepsMove) {
+    //outside.dispense(uStepsMove, true);
+    //inside.dispense(uStepsMove, false);
+  //}
+//
+  //void actuateStraight(int uStepsMoveO) {
+    //outside.dispense(uStepsMove, false);
+    //inside.dispense(uStepsMove, true);
+  //}
 
   boolean getCrossedStatus() { return crossed; }
 
