@@ -244,6 +244,18 @@ void setup() {
      .setSize(15)
      ;
 
+  cp5.addButton("initialize")
+     .setPosition(margin+6*buttonWidth,(height/4)+buttonHeight)
+     .setSize(buttonWidth,buttonHeight)
+     .setLabel(" Initialize ")
+     .setColorBackground(0xff00ff00 + 0x88000000)
+     .setColorForeground(0xff00ff00)
+     .setOff()
+     .getCaptionLabel()
+     .setFont(font)
+     .setSize(15)
+     ;
+
   cp5.addButton("returnToOrigin")
      .setPosition(margin+4.5*buttonWidth,(height/4)+buttonHeight)
      .setSize(buttonWidth,buttonHeight)
@@ -367,6 +379,12 @@ void guiDefault() {
       //}
     //}
   //}
+}
+
+void initialize() {
+  for (Pump currentPump : controlPumps){
+    currentPump.dispense(400,true);
+  }
 }
 
 void returnToOrigin() {
